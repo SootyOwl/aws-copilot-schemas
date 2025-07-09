@@ -1,0 +1,30 @@
+{
+  "name": "aws-copilot-schemas",
+  "version": "1.0.0",
+  "description": "The `schemas/copilot-schema.json` file provides a JSON Schema for validating AWS Copilot manifest files (`manifest.yml`). This schema is used to ensure that the manifest files conform to the expected structure and data types defined by AWS Copilot.",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "node validate-schemas.js",
+    "validate": "node validate-schemas.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SootyOwl/aws-copilot-schemas.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/SootyOwl/aws-copilot-schemas/issues"
+  },
+  "homepage": "https://github.com/SootyOwl/aws-copilot-schemas#readme",
+  "dependencies": {
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "js-yaml": "^4.1.0"
+  }
+}

@@ -1,2 +1,3 @@
 tests/lb-web/manifest.yml
 tests/backend/manifest.yml
+node_modules/
