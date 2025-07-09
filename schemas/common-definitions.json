@@ -1,0 +1,1192 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$defs": {
+    "duration": {
+      "type": "string",
+      "pattern": "^\\d+[smh]$",
+      "description": "Duration string (e.g., 30s, 5m, 1h)"
+    },
+    "platform": {
+      "oneOf": [
+        {
+          "type": "string",
+          "pattern": "^(linux|windows)/(x86_64|arm64)$"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "osfamily": {
+              "type": "string",
+              "enum": ["linux", "windows_server_2019_core", "windows_server_2019_full", "windows_server_2022_core", "windows_server_2022_full"]
+            },
+            "architecture": {
+              "type": "string",
+              "enum": ["x86_64", "arm64"]
+            }
+          },
+          "required": ["osfamily", "architecture"],
+          "additionalProperties": false
+        }
+      ],
+      "description": "Operating system and architecture (formatted as [os]/[arch]) to pass with docker build --platform. For example, linux/arm64 or windows/x86_64. The default is linux/x86_64."
+    },
+    "count": {
+      "oneOf": [
+        {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        {
+          "$ref": "./common-definitions.json#/$defs/scaling-config"
+        }
+      ],
+      "description": "The number of tasks that your service should maintain."
+    },
+    "cpu": {
+      "type": "integer",
+      "enum": [256, 512, 1024, 2048, 4096],
+      "description": "Number of CPU units for the task. See the Amazon ECS docs for valid CPU values."
+    },
+    "memory": {
+      "type": "integer",
+      "enum": [512, 1024, 2048, 3072, 4096, 5120, 6144, 7168, 8192, 16384, 30720],
+      "description": "Amount of memory in MiB used by the task. See the Amazon ECS docs for valid memory values."
+    },
+    "entrypoint": {
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      ],
+      "description": "Override the default entrypoint in the image."
+    },
+    "command": {
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      ],
+      "description": "Override the default command in the image."
+    },
+    "sidecars": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "port": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 65535,
+            "description": "Port of the container to expose (optional)."
+          },
+          "image": {
+            "oneOf": [
+              {
+                "type": "string",
+                "description": "Image URL for the sidecar container (required)."
+              },
+              {
+                "$ref": "#/$defs/image-config"
+              }
+            ]
+          },
+          "essential": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether the sidecar container is an essential container (optional, default true)."
+          },
+          "credentialsParameter": {
+            "type": "string",
+            "pattern": "^arn:aws:",
+            "description": "ARN of the secret containing the private repository credentials (optional)."
+          },
+          "variables": {
+            "$ref": "#/$defs/environment-variables",
+            "description": "Environment variables for the sidecar container (optional)"
+          },
+          "secrets": {
+            "$ref": "#/$defs/secrets",
+            "description": "Secrets to expose to the sidecar container (optional)"
+          },
+          "env_file": {
+            "type": "string",
+            "description": "The path to a file from the root of your workspace containing the environment variables to pass to the sidecar container. For more information about the environment variable file, see Considerations for specifying environment variable files."
+          },
+          "mount_points": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "source_volume": {
+                  "type": "string",
+                  "description": "Source volume to mount in this sidecar (required)."
+                },
+                "path": {
+                  "type": "string",
+                  "description": "The path inside the sidecar container at which to mount the volume (required)."
+                },
+                "read_only": {
+                  "type": "boolean",
+                  "default": true,
+                  "description": "Whether to allow the sidecar read-only access to the volume (default true)."
+                }
+              },
+              "required": ["source_volume", "path"],
+              "additionalProperties": false
+            },
+            "description": "Mount paths for EFS volumes specified at the service level (optional)."
+          },
+          "labels": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Docker labels to apply to this container (optional)."
+          },
+          "depends_on": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "enum": ["start", "healthy", "complete", "success"]
+            },
+            "description": "Container dependencies to apply to this container (optional)."
+          },
+          "entrypoint": {
+            "$ref": "#/$defs/entrypoint",
+            "description": "Override the default entrypoint in the sidecar."
+          },
+          "command": {
+            "$ref": "#/$defs/command",
+            "description": "Override the default command in the sidecar."
+          },
+          "healthcheck": {
+            "type": "object",
+            "properties": {
+              "command": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The command to run to determine if the sidecar container is healthy. The string array can start with CMD to execute the command arguments directly, or CMD-SHELL to run the command with the container's default shell."
+              },
+              "interval": {
+                "$ref": "#/$defs/duration",
+                "description": "Time period between health checks, in seconds. Default is 10s."
+              },
+              "retries": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Number of times to retry before container is deemed unhealthy. Default is 2."
+              },
+              "timeout": {
+                "$ref": "#/$defs/duration",
+                "description": "How long to wait before considering the health check failed, in seconds. Default is 5s."
+              },
+              "start_period": {
+                "$ref": "#/$defs/duration",
+                "description": "Length of grace period for containers to bootstrap before failed health checks count towards the maximum number of retries. Default is 0s."
+              }
+            },
+            "additionalProperties": false,
+            "description": "Optional configuration for sidecar container health checks."
+          }
+        },
+        "required": ["image"],
+        "additionalProperties": false
+      },
+      "description": "Sidecar containers to run alongside the main container."
+    },
+    "image-config": {
+      "type": "object",
+      "properties": {
+        "build": {
+          "oneOf": [
+            {
+              "type": "string",
+              "description": "If you specify a string, Copilot interprets it as the path to your Dockerfile. It will assume that the dirname of the string you specify should be the build context."
+            },
+            {
+              "type": "object",
+              "properties": {
+                "dockerfile": {
+                  "type": "string",
+                  "description": "Path to the Dockerfile"
+                },
+                "context": {
+                  "type": "string",
+                  "description": "Build context directory"
+                },
+                "target": {
+                  "type": "string",
+                  "description": "Build target stage"
+                },
+                "cache_from": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Images to use as cache sources"
+                },
+                "args": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "description": "Build arguments"
+                }
+              },
+              "additionalProperties": false
+            }
+          ],
+          "description": "Build a container from a Dockerfile with optional arguments. Mutually exclusive with image.location."
+        },
+        "location": {
+          "type": "string",
+          "description": "Instead of building a container from a Dockerfile, you can specify an existing image name. Mutually exclusive with image.build. The location field follows the same definition as the image parameter in the Amazon ECS task definition."
+        },
+        "credentials": {
+          "type": "string",
+          "pattern": "^arn:aws:",
+          "description": "An optional credentials ARN for a private repository. The credentials field follows the same definition as the credentialsParameter in the Amazon ECS task definition."
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "An optional key/value map of Docker labels to add to the container."
+        },
+        "depends_on": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "enum": ["start", "healthy", "complete", "success"]
+          },
+          "description": "An optional key/value map of Container Dependencies to add to the container. The key of the map is a container name and the value is the condition to depend on. Valid conditions are: start, healthy, complete, and success. You cannot specify a complete or success dependency on an essential container."
+        },
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535,
+          "description": "The port exposed in your Dockerfile. Copilot should parse this value for you from your EXPOSE instruction."
+        },
+        "healthcheck": {
+          "type": "object",
+          "properties": {
+            "command": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "The command to run to determine if the container is healthy. The string array can start with CMD to execute the command arguments directly, or CMD-SHELL to run the command with the container's default shell."
+            },
+            "interval": {
+              "$ref": "#/$defs/duration",
+              "description": "Time period between health checks, in seconds. Default is 10s."
+            },
+            "retries": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Number of times to retry before container is deemed unhealthy. Default is 2."
+            },
+            "timeout": {
+              "$ref": "#/$defs/duration",
+              "description": "How long to wait before considering the health check failed, in seconds. Default is 5s."
+            },
+            "start_period": {
+              "$ref": "#/$defs/duration",
+              "description": "Length of grace period for containers to bootstrap before failed health checks count towards the maximum number of retries. Default is 0s."
+            }
+          },
+          "additionalProperties": false,
+          "description": "Optional configuration for container health checks."
+        }
+      },
+      "oneOf": [
+        {
+          "required": ["build"]
+        },
+        {
+          "required": ["location"]
+        }
+      ],
+      "additionalProperties": false
+    },
+    "http-healthcheck": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "pattern": "^/.*$",
+          "description": "The destination that the health check requests are sent to."
+        },
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535,
+          "description": "The port that the health check requests are sent to. The default is image.port, or the port exposed by http.target_container, if set. If the port exposed is 443, then the health check protocol is automatically set to HTTPS."
+        },
+        "success_codes": {
+          "type": "string",
+          "pattern": "^(\\d{3}(,\\d{3})*|\\d{3}-\\d{3})$",
+          "description": "The HTTP status codes that healthy targets must use when responding to an HTTP health check. You can specify values between 200 and 499. You can specify multiple values (for example, \"200,202\") or a range of values (for example, \"200-299\"). The default is 200."
+        },
+        "healthy_threshold": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 10,
+          "description": "The number of consecutive health check successes required before considering an unhealthy target healthy. The default is 5. Range: 2-10."
+        },
+        "unhealthy_threshold": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 10,
+          "description": "The number of consecutive health check failures required before considering a target unhealthy. The default is 2. Range: 2-10."
+        },
+        "interval": {
+          "$ref": "#/$defs/duration",
+          "description": "The approximate amount of time, in seconds, between health checks of an individual target. The default is 30s. Range: 5s–300s."
+        },
+        "timeout": {
+          "$ref": "#/$defs/duration",
+          "description": "The amount of time, in seconds, during which no response from a target means a failed health check. The default is 5s. Range 5s-300s."
+        },
+        "grace_period": {
+          "$ref": "#/$defs/duration",
+          "description": "The amount of time to ignore failing target group healthchecks on container start. The default is 60s. This can be useful to fix deployment issues for containers which take a while to become healthy and begin listening for incoming connections, or to speed up deployment of containers guaranteed to start quickly."
+        }
+      },
+      "additionalProperties": false
+    },
+    "http-additional-rule": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "pattern": "^/.*$",
+          "description": "Requests to this path will be forwarded to your service. Each listener rule should listen on a unique path."
+        },
+        "healthcheck": {
+          "oneOf": [
+            {
+              "type": "string",
+              "pattern": "^/.*$",
+              "description": "If you specify a string, Copilot interprets it as the path exposed in your container to handle target group health check requests. The default is \"/\"."
+            },
+            {
+              "$ref": "#/$defs/http-healthcheck"
+            }
+          ]
+        },
+        "deregistration_delay": {
+          "$ref": "#/$defs/duration",
+          "description": "The amount of time to wait for targets to drain connections during deregistration. The default is 60s. Setting this to a larger value gives targets more time to gracefully drain connections, but increases the time required for new deployments. Range 0s-3600s."
+        },
+        "target_container": {
+          "type": "string",
+          "description": "A sidecar container that requests are routed to instead of the main service container. If the target container's port is set to 443, then the protocol is set to HTTPS so that the load balancer establishes TLS connections with the Fargate tasks using certificates that you install on the target container."
+        },
+        "target_port": {
+          "type": "string",
+          "description": "The container port that receives traffic. Specify this field if the container port is different from image.port for the main container or sidecar.port for the sidecar containers."
+        },
+        "stickiness": {
+          "type": "boolean",
+          "description": "Indicates whether sticky sessions are enabled."
+        },
+        "allowed_source_ips": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}/\\d{1,2}$"
+          },
+          "description": "CIDR IP addresses permitted to access your service."
+        },
+        "alias": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "hosted_zone": {
+                    "type": "string"
+                  }
+                },
+                "required": ["name"],
+                "additionalProperties": false
+              }
+            }
+          ],
+          "description": "HTTPS domain alias of your service."
+        },
+        "hosted_zone": {
+          "type": "string",
+          "description": "ID of your existing hosted zone; can only be used with http.alias and http.additional_rules.alias. If you have an environment with imported certificates, you can specify the hosted zone into which Copilot should insert the A record once the load balancer is created."
+        },
+        "redirect_to_https": {
+          "type": "boolean",
+          "description": "Automatically redirect the Application Load Balancer from HTTP to HTTPS. By default it is true."
+        },
+        "version": {
+          "type": "string",
+          "enum": ["grpc", "http1", "http2"],
+          "description": "The HTTP(S) protocol version. Must be one of 'grpc', 'http1', or 'http2'. If omitted, then 'http1' is assumed. If using gRPC, please note that a domain must be associated with your application."
+        }
+      },
+      "required": ["path"],
+      "additionalProperties": false
+    },
+    "nlb-healthcheck": {
+      "type": "object",
+      "properties": {
+        "port": {
+          "type": "string",
+          "description": "The port that the health check requests are sent to. Specify this if your health check should be performed on a different port than the container target port."
+        },
+        "healthy_threshold": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 10,
+          "description": "The number of consecutive health check successes required before considering an unhealthy target healthy. The default is 3. Range: 2-10."
+        },
+        "unhealthy_threshold": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 10,
+          "description": "The number of consecutive health check failures required before considering a target unhealthy. The default is 3. Range: 2-10."
+        },
+        "grace_period": {
+          "$ref": "#/$defs/duration",
+          "description": "The amount of time to ignore failing target group healthchecks on container start. The default is 60s. This can be useful to fix deployment issues for containers which take a while to become healthy and begin listening for incoming connections, or to speed up deployment of containers guaranteed to start quickly."
+        },
+        "interval": {
+          "$ref": "#/$defs/duration",
+          "description": "The approximate amount of time, in seconds, between health checks of an individual target. The value can be 10s or 30s. The default is 30s."
+        },
+        "timeout": {
+          "$ref": "#/$defs/duration",
+          "description": "The amount of time, in seconds, during which no response from a target means a failed health check. The default is 10s."
+        }
+      },
+      "additionalProperties": false
+    },
+    "nlb-additional-listener": {
+      "type": "object",
+      "properties": {
+        "port": {
+          "type": "string",
+          "pattern": "^\\d+(/(?:tcp|udp|tls))?$",
+          "description": "Required. The additional port and protocol for the Network Load Balancer to listen on."
+        },
+        "healthcheck": {
+          "$ref": "#/$defs/nlb-healthcheck",
+          "description": "Specify the health check configuration for your additional listener on the Network Load Balancer."
+        },
+        "target_container": {
+          "type": "string",
+          "description": "A sidecar container that takes the place of a service container."
+        },
+        "target_port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535,
+          "description": "The container port that receives traffic. Specify this field if the container port is different from nlb.port, the listener port."
+        },
+        "ssl_policy": {
+          "type": "string",
+          "description": "The security policy that defines which protocols and ciphers are supported. To learn more, see this doc."
+        },
+        "stickiness": {
+          "type": "boolean",
+          "description": "Indicates whether sticky sessions are enabled."
+        }
+      },
+      "required": ["port"],
+      "additionalProperties": false
+    },
+    "scaling-config": {
+      "type": "object",
+      "properties": {
+        "spot": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "If you want to use Fargate Spot capacity to run your services, you can specify a number under the spot subfield."
+        },
+        "range": {
+          "oneOf": [
+            {
+              "type": "string",
+              "pattern": "^\\d+-\\d+$",
+              "description": "You can specify a minimum and maximum bound for the number of tasks your service should maintain, based on the values you specify for the metrics."
+            },
+            {
+              "type": "object",
+              "properties": {
+                "min": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "The minimum desired count for your service using autoscaling."
+                },
+                "max": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "The maximum desired count for your service using autoscaling."
+                },
+                "spot_from": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "The desired count at which you wish to start placing your service using Fargate Spot capacity providers."
+                }
+              },
+              "required": ["min", "max"],
+              "additionalProperties": false
+            }
+          ]
+        },
+        "cooldown": {
+          "type": "object",
+          "properties": {
+            "in": {
+              "$ref": "#/$defs/duration",
+              "description": "The cooldown time for autoscaling fields to scale up the service."
+            },
+            "out": {
+              "$ref": "#/$defs/duration",
+              "description": "The cooldown time for autoscaling fields to scale down the service."
+            }
+          },
+          "additionalProperties": false,
+          "description": "Cooldown scaling fields that are used as the default cooldown for all autoscaling fields specified."
+        },
+        "cpu_percentage": {
+          "oneOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 100
+                },
+                "cooldown": {
+                  "$ref": "#/$defs/scaling-config/properties/cooldown"
+                }
+              },
+              "required": ["value"],
+              "additionalProperties": false
+            }
+          ],
+          "description": "Scale up or down based on the average CPU your service should maintain."
+        },
+        "memory_percentage": {
+          "oneOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 100
+                },
+                "cooldown": {
+                  "$ref": "#/$defs/scaling-config/properties/cooldown"
+                }
+              },
+              "required": ["value"],
+              "additionalProperties": false
+            }
+          ],
+          "description": "Scale up or down based on the average memory your service should maintain."
+        },
+        "requests": {
+          "oneOf": [
+            {
+              "type": "integer",
+              "minimum": 1
+            },
+            {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "cooldown": {
+                  "$ref": "#/$defs/scaling-config/properties/cooldown"
+                }
+              },
+              "required": ["value"],
+              "additionalProperties": false
+            }
+          ],
+          "description": "Scale up or down based on the request count handled per task."
+        },
+        "response_time": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/duration"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "$ref": "#/$defs/duration"
+                },
+                "cooldown": {
+                  "$ref": "#/$defs/scaling-config/properties/cooldown"
+                }
+              },
+              "required": ["value"],
+              "additionalProperties": false
+            }
+          ],
+          "description": "Scale up or down based on the service average response time."
+        }
+      },
+      "additionalProperties": false
+    },
+    "deployment": {
+      "type": "object",
+      "properties": {
+        "rolling": {
+          "type": "string",
+          "enum": ["default", "recreate"],
+          "description": "Rolling deployment strategy. Valid values are 'default' and 'recreate'."
+        },
+        "rollback_alarms": {
+          "oneOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "As a list of strings, the names of existing CloudWatch alarms to associate with your service that may trigger a deployment rollback."
+            },
+            {
+              "type": "object",
+              "properties": {
+                "cpu_utilization": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 100,
+                  "description": "Percentage value at or above which alarm is triggered."
+                },
+                "memory_utilization": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 100,
+                  "description": "Percentage value at or above which alarm is triggered."
+                }
+              },
+              "additionalProperties": false
+            }
+          ],
+          "description": "If an alarm is in \"In alarm\" state at the beginning of a deployment, Amazon ECS will NOT monitor alarms for the duration of that deployment. For more details, read the docs here."
+        }
+      },
+      "additionalProperties": false
+    },
+    "network": {
+      "type": "object",
+      "properties": {
+        "connect": {
+          "oneOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "alias": {
+                  "type": "string",
+                  "description": "A custom DNS name for this service exposed to Service Connect. Defaults to the service name."
+                }
+              },
+              "additionalProperties": false
+            }
+          ],
+          "description": "Enable Service Connect for your service, which makes the traffic between services load balanced and more resilient. Defaults to false."
+        },
+        "vpc": {
+          "type": "object",
+          "properties": {
+            "placement": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "enum": ["public", "private"],
+                  "description": "When using it as a string, the value must be one of 'public' or 'private'. Defaults to launching your tasks in public subnets."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "subnets": {
+                      "oneOf": [
+                        {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "pattern": "^subnet-[a-f0-9]{8}([a-f0-9]{9})?$"
+                          },
+                          "description": "As a list of strings, the subnet IDs where Copilot should launch ECS tasks."
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "from_tags": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "oneOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    }
+                                  }
+                                ]
+                              },
+                              "description": "Tag sets by which to filter subnets where Copilot should launch ECS tasks."
+                            }
+                          },
+                          "required": ["from_tags"],
+                          "additionalProperties": false
+                        }
+                      ]
+                    }
+                  },
+                  "required": ["subnets"],
+                  "additionalProperties": false
+                }
+              ]
+            },
+            "security_groups": {
+              "oneOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "oneOf": [
+                      {
+                        "type": "string",
+                        "pattern": "^sg-[a-f0-9]{8}([a-f0-9]{9})?$",
+                        "description": "Security group ID"
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "from_cfn": {
+                            "type": "string",
+                            "description": "The name of a CloudFormation stack export."
+                          }
+                        },
+                        "required": ["from_cfn"],
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
+                  "description": "Additional security group IDs associated with your tasks."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "from_cfn": {
+                      "type": "string",
+                      "description": "The name of a CloudFormation stack export."
+                    },
+                    "deny_default": {
+                      "type": "boolean",
+                      "description": "Disable the default security group that allows ingress from all services in your environment."
+                    },
+                    "groups": {
+                      "oneOf": [
+                        {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "pattern": "^sg-[a-f0-9]{8}([a-f0-9]{9})?$"
+                          },
+                          "description": "Additional security group IDs associated with your tasks."
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "from_cfn": {
+                              "type": "string",
+                              "description": "The name of a CloudFormation stack export."
+                            }
+                          },
+                          "required": ["from_cfn"],
+                          "additionalProperties": false
+                        }
+                      ]
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              ]
+            }
+          },
+          "additionalProperties": false,
+          "description": "Subnets and security groups attached to your tasks."
+        }
+      },
+      "additionalProperties": false
+    },
+    "environment-variables": {
+      "type": "object",
+      "additionalProperties": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "from_cfn": {
+                "type": "string",
+                "description": "The name of a CloudFormation stack export."
+              }
+            },
+            "required": ["from_cfn"],
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "secrets": {
+      "type": "object",
+      "additionalProperties": {
+        "oneOf": [
+          {
+            "type": "string",
+            "pattern": "^(arn:aws:(ssm|secretsmanager):|[A-Za-z0-9/_.${}\\-]+)$",
+            "description": "SSM Parameter Store parameter name, Secrets Manager ARN, or simple parameter name"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "from_cfn": {
+                "type": "string",
+                "description": "The name of a CloudFormation stack export."
+              },
+              "secretsmanager": {
+                "type": "string",
+                "description": "Reference to AWS Secrets Manager secret"
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "storage": {
+      "type": "object",
+      "properties": {
+        "ephemeral": {
+          "type": "integer",
+          "minimum": 20,
+          "maximum": 200,
+          "description": "Specify how much ephemeral task storage to provision in GiB. The default value and minimum is 20 GiB. The maximum size is 200 GiB. Sizes above 20 GiB incur additional charges."
+        },
+        "readonly_fs": {
+          "type": "boolean",
+          "description": "Specify true to give your container read-only access to its root file system."
+        },
+        "volumes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "path": {
+                "type": "string",
+                "pattern": "^[a-zA-Z0-9._/-]+$",
+                "description": "Required. Specify the location in the container where you would like your volume to be mounted. Must be fewer than 242 characters and must consist only of the characters a-zA-Z0-9.-_/."
+              },
+              "read_only": {
+                "type": "boolean",
+                "default": true,
+                "description": "Optional. Defaults to true. Defines whether the volume is read-only or not. If false, the container is granted elasticfilesystem:ClientWrite permissions to the filesystem and the volume is writable."
+              },
+              "efs": {
+                "oneOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "oneOf": [
+                          {
+                            "type": "string",
+                            "pattern": "^fs-[a-f0-9]{8}([a-f0-9]{9})?$",
+                            "description": "Required. The ID of the filesystem you would like to mount."
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "from_cfn": {
+                                "type": "string",
+                                "description": "The name of a CloudFormation stack export."
+                              }
+                            },
+                            "required": ["from_cfn"],
+                            "additionalProperties": false
+                          }
+                        ]
+                      },
+                      "root_dir": {
+                        "type": "string",
+                        "pattern": "^[a-zA-Z0-9._/-]*$",
+                        "description": "Optional. Defaults to /. Specify the location in the EFS filesystem you would like to use as the root of your volume. Must be fewer than 255 characters and must consist only of the characters a-zA-Z0-9.-_/. If using an access point, root_dir must be either empty or / and auth.iam must be true."
+                      },
+                      "uid": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 4294967295,
+                        "description": "Optional. Must be specified with gid. Mutually exclusive with root_dir, auth, and id. The POSIX UID to use for the dedicated access point created for the managed EFS filesystem."
+                      },
+                      "gid": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 4294967295,
+                        "description": "Optional. Must be specified with uid. Mutually exclusive with root_dir, auth, and id. The POSIX GID to use for the dedicated access point created for the managed EFS filesystem."
+                      },
+                      "auth": {
+                        "type": "object",
+                        "properties": {
+                          "iam": {
+                            "type": "boolean",
+                            "default": true,
+                            "description": "Optional. Defaults to true. Whether or not to use IAM authorization to determine whether the volume is allowed to connect to EFS."
+                          },
+                          "access_point_id": {
+                            "type": "string",
+                            "pattern": "^fsap-[a-f0-9]{8}([a-f0-9]{9})?$",
+                            "description": "Optional. Defaults to \"\". The ID of the EFS access point to connect to. If using an access point, root_dir must be either empty or / and auth.iam must be true."
+                          }
+                        },
+                        "additionalProperties": false,
+                        "description": "Specify advanced authorization configuration for EFS."
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                ],
+                "description": "Specify more detailed EFS configuration. If specified as a boolean, or using only the uid and gid subfields, creates a managed EFS filesystem and dedicated Access Point for this workload."
+              }
+            },
+            "required": ["path"],
+            "additionalProperties": false
+          },
+          "description": "Specify the name and configuration of any EFS volumes you would like to attach."
+        }
+      },
+      "additionalProperties": false
+    },
+    "publish": {
+      "type": "object",
+      "properties": {
+        "topics": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "pattern": "^[a-zA-Z0-9_-]+$",
+                "description": "Required. The name of the SNS topic. Must contain only upper and lowercase letters, numbers, hyphens, and underscores."
+              },
+              "fifo": {
+                "oneOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "content_based_deduplication": {
+                        "type": "boolean",
+                        "description": "If the message body is guaranteed to be unique for each published message, you can enable content-based deduplication for the SNS FIFO topic."
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                ],
+                "description": "FIFO (first in, first out) SNS topic configuration. If you specify true, Copilot will create the topic with FIFO ordering."
+              }
+            },
+            "required": ["name"],
+            "additionalProperties": false
+          },
+          "description": "List of topic objects."
+        }
+      },
+      "additionalProperties": false
+    },
+    "logging": {
+      "type": "object",
+      "properties": {
+        "retention": {
+          "type": "integer",
+          "enum": [1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1827, 3653],
+          "description": "Optional. The number of days to retain the log events. See this page for all accepted values. If omitted, the default is 30."
+        },
+        "image": {
+          "type": "object",
+          "description": "Optional. The Fluent Bit image to use. Defaults to public.ecr.aws/aws-observability/aws-for-fluent-bit:stable."
+        },
+        "destination": {
+          "type": "object",
+          "description": "Optional. The configuration options to send to the FireLens log driver."
+        },
+        "enableMetadata": {
+          "type": "boolean",
+          "description": "Optional. Whether to include ECS metadata in logs. Defaults to true."
+        },
+        "secretOptions": {
+          "type": "object",
+          "description": "Optional. The secrets to pass to the log configuration."
+        },
+        "configFilePath": {
+          "type": "string",
+          "description": "Optional. The full config file path in your custom Fluent Bit image."
+        },
+        "env_file": {
+          "type": "string",
+          "description": "The path to a file from the root of your workspace containing the environment variables to pass to the logging sidecar container. For more information about the environment variable file, see Considerations for specifying environment variable files."
+        }
+      },
+      "additionalProperties": false
+    },
+    "observability": {
+      "type": "object",
+      "properties": {
+        "tracing": {
+          "type": "string",
+          "enum": ["awsxray"],
+          "description": "The vendor to use for tracing. Currently, only awsxray is supported."
+        }
+      },
+      "additionalProperties": false
+    },
+    "taskdef-override": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Required. Path to the Task Definition field to override."
+        },
+        "value": {
+          "description": "Required. Value of the Task Definition field to override."
+        }
+      },
+      "required": ["path", "value"],
+      "additionalProperties": false
+    },
+    "environments": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "description": "Environment-specific overrides"
+      }
+    },
+    "subnet-config": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^subnet-[a-f0-9]{8}([a-f0-9]{9})?$",
+          "description": "The ID of the subnet to import. This field is mutually exclusive with cidr and az."
+        },
+        "cidr": {
+          "type": "string",
+          "pattern": "^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}/\\d{1,2}$",
+          "description": "An IPv4 CIDR block assigned to the subnet. This field is mutually exclusive with id."
+        },
+        "az": {
+          "type": "string",
+          "pattern": "^[a-z]+-[a-z]+-\\d[a-z]$",
+          "description": "The Availability Zone name assigned to the subnet. The az field is optional, by default Availability Zones are assigned in alphabetical order. This field is mutually exclusive with id."
+        }
+      },
+      "oneOf": [
+        {
+          "required": ["id"]
+        },
+        {
+          "required": ["cidr"]
+        }
+      ],
+      "additionalProperties": false
+    },
+    "security-group-rule": {
+      "type": "object",
+      "properties": {
+        "ip_protocol": {
+          "type": "string",
+          "description": "The IP protocol name or number."
+        },
+        "ports": {
+          "oneOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 65535
+            },
+            {
+              "type": "string",
+              "pattern": "^\\d{1,5}-\\d{1,5}$"
+            }
+          ],
+          "description": "The port range or number for the security group rule."
+        },
+        "cidr": {
+          "type": "string",
+          "pattern": "^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}/\\d{1,2}$",
+          "description": "The IPv4 address range, in CIDR format."
+        }
+      },
+      "required": ["ip_protocol", "cidr"],
+      "additionalProperties": false
+    }
+  }
+}

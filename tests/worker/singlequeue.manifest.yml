@@ -1,0 +1,30 @@
+# Collect messages from multiple topics published from other services to a single SQS queue.
+name: cost-analyzer
+type: Worker Service
+
+image:
+  build: ./cost-analyzer/Dockerfile
+
+subscribe:
+  topics:
+    - name: products
+      service: orders
+      filter_policy:
+        event:
+        - anything-but: order_cancelled
+    - name: inventory
+      service: warehouse
+  queue:
+    retention: 96h
+    timeout: 30s
+    dead_letter:
+      tries: 10
+
+cpu: 256
+memory: 512
+count: 3
+exec: true
+
+secrets:
+  DB:
+    secretsmanager: 'mysql'

@@ -1,0 +1,22 @@
+# Assign individual queues to each topic.
+name: cost-analyzer
+type: Worker Service
+
+image:
+  build: ./cost-analyzer/Dockerfile
+
+subscribe:
+  topics:
+    - name: products
+      service: orders
+      queue:
+        retention: 5d
+        timeout: 1h
+        dead_letter:
+          tries: 3
+    - name: inventory
+      service: warehouse
+      queue:
+        retention: 1d
+        timeout: 5m
+count: 1

@@ -1,0 +1,22 @@
+# Environment manifests changes can also be released with a pipeline.
+name: env-pipeline
+
+source:
+  provider: CodeCommit
+  properties:
+    branch: main
+    repository: https://git-codecommit.us-east-2.amazonaws.com/v1/repos/MyDemoRepo
+
+stages:
+  - name: test
+    deployments:
+      deploy-env:
+        template_path: infrastructure/test.env.yml
+        template_config: infrastructure/test.env.params.json
+        stack_name: app-test
+  - name: prod
+    deployments:
+      deploy-prod:
+        template_path: infrastructure/prod.env.yml
+        template_config: infrastructure/prod.env.params.json
+        stack_name: app-prod

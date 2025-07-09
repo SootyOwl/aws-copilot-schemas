@@ -1,0 +1,24 @@
+# Alternatively, you can control the order of stack deployments in a stage. 
+# See https://aws.github.io/copilot-cli/blogs/release-v118/#controlling-order-of-deployments-in-a-pipeline
+name: app-pipeline
+
+source:
+  provider: Bitbucket
+  properties:
+    branch: main
+    repository:  https://bitbucket.org/user/repo
+
+stages:
+  - name: test
+    deployments:
+      orders:
+      warehouse:
+      frontend:
+        depends_on: [orders, warehouse]
+  - name: prod
+    require_approval: true
+    deployments:
+      orders:
+      warehouse:
+      frontend:
+        depends_on: [orders, warehouse]

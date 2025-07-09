@@ -1,0 +1,22 @@
+name: 'frontend'
+type: 'Load Balanced Web Service'
+
+image:
+  build: './frontend/Dockerfile'
+  port: 8080
+
+http:
+  path: '/'
+  healthcheck: '/_healthcheck'
+
+cpu: 256
+memory: 512
+count: 3
+exec: true
+
+variables:
+  LOG_LEVEL: info
+secrets:
+  GITHUB_TOKEN: GITHUB_TOKEN
+  DB_SECRET:
+    secretsmanager: 'mysql'

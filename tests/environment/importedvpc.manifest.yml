@@ -1,0 +1,12 @@
+name: imported
+type: Environment
+network:
+  vpc:
+    id: 'vpc-123456789abcdef12'
+    subnets:
+      public:
+        - id: 'subnet-11111111'
+        - id: 'subnet-22222222123456789'
+      private:
+        - id: 'subnet-33333333'
+        - id: 'subnet-44444444444444444'

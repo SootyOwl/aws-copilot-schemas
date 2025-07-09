@@ -1,0 +1,6 @@
+{
+    "yaml.schemas": {
+        "./schemas/copilot-schema.json": "**manifest.yml",
+        "file:///home/tyto/dev/personal/aws-copilot-schemas/schemas/copilot-schema.json": "file:///home/tyto/dev/personal/aws-copilot-schemas/tests/backend/manifest.yml"
+    }
+}

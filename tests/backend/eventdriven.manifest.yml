@@ -1,0 +1,21 @@
+# See https://aws.github.io/copilot-cli/docs/developing/publish-subscribe/
+name: warehouse
+type: Backend Service
+
+image:
+  build: ./warehouse/Dockerfile
+  port: 80
+
+publish:
+  topics:
+    - name: 'inventory'
+    - name: 'orders'
+      fifo: true
+
+variables:
+  DDB_TABLE_NAME: 'inventory'
+
+count:
+  range: 3-5
+  cpu_percentage: 70
+  memory_percentage: 80

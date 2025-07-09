@@ -1,0 +1,17 @@
+name: 'frontend'
+type: 'Load Balanced Web Service'
+
+image:
+  build: './frontend/Dockerfile'
+  port: 8080
+
+http:
+  path: '/'
+  alias: 'example.com'
+
+environments:
+  qa:
+    http:
+      alias: # The "qa" environment imported a certificate.
+        - name: 'qa.example.com'
+          hosted_zone: Z0873220N255IR3MTNR4

@@ -1,0 +1,26 @@
+name: 'frontend'
+type: 'Load Balanced Web Service'
+
+image:
+  build: Dockerfile
+  port: 8080
+
+http:
+  alias: 'example.com'
+  path: '/'
+  healthcheck:
+    path: '/_health'
+
+  # The envoy container's port is 443 resulting in the protocol and health check protocol to be to "HTTPS" 
+  # so that the load balancer establishes TLS connections with the Fargate tasks using certificates that you 
+  # install on the envoy container. These certificates can be self-signed.
+  target_container: envoy
+
+sidecars:
+  envoy:
+    port: 443
+    image: aws_account_id.dkr.ecr.us-west-2.amazonaws.com/envoy-proxy-with-selfsigned-certs:v1
+
+network:
+  vpc:
+    placement: 'private'

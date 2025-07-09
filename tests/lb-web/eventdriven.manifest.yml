@@ -1,0 +1,19 @@
+# See https://aws.github.io/copilot-cli/docs/developing/publish-subscribe/
+name: 'orders'
+type: 'Load Balanced Web Service'
+
+image:
+  build: Dockerfile
+  port: 80
+http:
+  path: '/'
+  alias: 'orders.example.com'
+
+variables:
+  DDB_TABLE_NAME: 'orders'
+
+publish:
+  topics:
+    - name: 'products'
+    - name: 'orders'
+      fifo: true

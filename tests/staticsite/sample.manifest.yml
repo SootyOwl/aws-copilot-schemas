@@ -1,0 +1,22 @@
+name: example
+type: Static Site
+
+http:
+  alias: 'example.com'
+
+files:
+  - source: src/someDirectory
+    recursive: true
+  - source: someFile.html
+
+# You can override any of the values defined above by environment.
+environments:
+  test:
+    files:
+      - source: './blob'
+        destination: 'assets'
+        recursive: true
+        exclude: '*'
+        reinclude:
+          - '*.txt'
+          - '*.png'

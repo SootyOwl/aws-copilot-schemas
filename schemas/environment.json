@@ -1,0 +1,300 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "pattern": "^[a-zA-Z][a-zA-Z0-9-]*$",
+      "description": "The name of your environment."
+    },
+    "type": {
+      "type": "string",
+      "const": "Environment",
+      "description": "Must be set to 'Environment'."
+    },
+    "network": {
+      "type": "object",
+      "properties": {
+        "vpc": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^vpc-[a-f0-9]{8}([a-f0-9]{9})?$",
+              "description": "The ID of the VPC to import. This field is mutually exclusive with cidr."
+            },
+            "cidr": {
+              "type": "string",
+              "pattern": "^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}/\\d{1,2}$",
+              "description": "An IPv4 CIDR block to associate with the Copilot-generated VPC. This field is mutually exclusive with id."
+            },
+            "subnets": {
+              "type": "object",
+              "properties": {
+                "public": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "./common-definitions.json#/$defs/subnet-config"
+                  },
+                  "description": "A list of public subnets configuration."
+                },
+                "private": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "./common-definitions.json#/$defs/subnet-config"
+                  },
+                  "description": "A list of private subnets configuration."
+                }
+              },
+              "additionalProperties": false,
+              "description": "Configure public and private subnets in a VPC."
+            },
+            "security_group": {
+              "type": "object",
+              "properties": {
+                "ingress": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "./common-definitions.json#/$defs/security-group-rule"
+                  },
+                  "description": "A list of inbound security group rules."
+                },
+                "egress": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "./common-definitions.json#/$defs/security-group-rule"
+                  },
+                  "description": "A list of outbound security group rules."
+                }
+              },
+              "additionalProperties": false,
+              "description": "Rules for the environment's security group."
+            },
+            "flow_logs": {
+              "oneOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "retention": {
+                      "type": "string",
+                      "description": "The number of days to retain the log events. See this page for all accepted values."
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              ],
+              "description": "If you specify 'true', Copilot will enable VPC flow logs to capture information about the IP traffic going in and out of the environment VPC. The default value for VPC flow logs is 14 days (2 weeks)."
+            }
+          },
+          "anyOf": [
+            {
+              "required": ["id"]
+            },
+            {
+              "required": ["cidr"]
+            },
+            {
+              "not": {
+                "anyOf": [
+                  {"required": ["id"]},
+                  {"required": ["cidr"]}
+                ]
+              }
+            }
+          ],
+          "additionalProperties": false,
+          "description": "The vpc section contains parameters to configure CIDR settings and subnets."
+        }
+      },
+      "additionalProperties": false,
+      "description": "The network section contains parameters for importing an existing VPC or configuring the Copilot-generated VPC."
+    },
+    "cdn": {
+      "oneOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "certificate": {
+              "type": "string",
+              "pattern": "^arn:aws:acm:us-east-1:",
+              "description": "A certificate by which to enable HTTPS traffic on a CloudFront distribution. CloudFront requires imported certificates to be in the us-east-1 region."
+            },
+            "static_assets": {
+              "type": "object",
+              "properties": {
+                "alias": {
+                  "type": "string",
+                  "description": "Additional HTTPS domain alias to use for static assets."
+                },
+                "location": {
+                  "type": "string",
+                  "description": "DNS domain name of the S3 bucket (for example, EXAMPLE-BUCKET.s3.us-west-2.amazonaws.com)."
+                },
+                "path": {
+                  "type": "string",
+                  "description": "The path pattern (for example, static/*) that specifies which requests should be forwarded to the S3 bucket."
+                }
+              },
+              "additionalProperties": false,
+              "description": "Optional. Configuration for static assets associated with CloudFront."
+            },
+            "terminate_tls": {
+              "type": "boolean",
+              "description": "Enable TLS termination for CloudFront."
+            }
+          },
+          "additionalProperties": false
+        }
+      ],
+      "description": "The cdn section contains parameters related to integrating your service with a CloudFront distribution. To enable the CloudFront distribution, specify cdn: true."
+    },
+    "http": {
+      "type": "object",
+      "properties": {
+        "public": {
+          "type": "object",
+          "properties": {
+            "certificates": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^arn:aws:acm:"
+              },
+              "description": "List of public AWS Certificate Manager certificate ARNs. By attaching public certificates to your load balancer, you can associate your Load Balanced Web Services with a domain name and reach them with HTTPS."
+            },
+            "access_logs": {
+              "oneOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "bucket_name": {
+                      "type": "string",
+                      "description": "The name of an existing S3 bucket in which to store the access logs."
+                    },
+                    "prefix": {
+                      "type": "string",
+                      "description": "The prefix for the log objects."
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              ],
+              "description": "Enable Elastic Load Balancing access logs. If you specify true, Copilot will create an S3 bucket where the Public Load Balancer will store access logs."
+            },
+            "ssl_policy": {
+              "type": "string",
+              "enum": [
+                "ELBSecurityPolicy-2016-08",
+                "ELBSecurityPolicy-TLS-1-0-2015-04",
+                "ELBSecurityPolicy-TLS-1-1-2017-01",
+                "ELBSecurityPolicy-TLS-1-2-2017-01",
+                "ELBSecurityPolicy-TLS-1-2-Ext-2018-06",
+                "ELBSecurityPolicy-FS-2018-06",
+                "ELBSecurityPolicy-FS-1-1-2019-08",
+                "ELBSecurityPolicy-FS-1-2-2019-08",
+                "ELBSecurityPolicy-FS-1-2-Res-2019-08",
+                "ELBSecurityPolicy-FS-1-2-Res-2020-10"
+              ],
+              "description": "Optional. Specify an SSL policy for the HTTPS listener of your Public Load Balancer, when applicable."
+            },
+            "ingress": {
+              "type": "object",
+              "properties": {
+                "cdn": {
+                  "type": "boolean",
+                  "description": "Restrict ingress traffic for the public load balancer to come from a CloudFront distribution."
+                },
+                "source_ips": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "pattern": "^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}/\\d{1,2}$"
+                  },
+                  "description": "Restrict public load balancer ingress traffic to source IPs."
+                }
+              },
+              "additionalProperties": false,
+              "description": "Ingress rules to restrict the Public Load Balancer's traffic."
+            }
+          },
+          "additionalProperties": false,
+          "description": "Configuration for the public load balancer."
+        },
+        "private": {
+          "type": "object",
+          "properties": {
+            "certificates": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^arn:aws:acm:"
+              },
+              "description": "List of AWS Certificate Manager certificate ARNs. By attaching public or private certificates to your load balancer, you can associate your Backend Services with a domain name and reach them with HTTPS."
+            },
+            "subnets": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^subnet-[a-f0-9]{8}([a-f0-9]{9})?$"
+              },
+              "description": "The subnet IDs to place the internal load balancer in."
+            },
+            "ingress": {
+              "type": "object",
+              "properties": {
+                "vpc": {
+                  "type": "boolean",
+                  "description": "Enable traffic from within the VPC to the internal load balancer."
+                }
+              },
+              "additionalProperties": false,
+              "description": "Ingress rules to allow for the internal load balancer."
+            },
+            "ssl_policy": {
+              "type": "string",
+              "enum": [
+                "ELBSecurityPolicy-2016-08",
+                "ELBSecurityPolicy-TLS-1-0-2015-04",
+                "ELBSecurityPolicy-TLS-1-1-2017-01",
+                "ELBSecurityPolicy-TLS-1-2-2017-01",
+                "ELBSecurityPolicy-TLS-1-2-Ext-2018-06",
+                "ELBSecurityPolicy-FS-2018-06",
+                "ELBSecurityPolicy-FS-1-1-2019-08",
+                "ELBSecurityPolicy-FS-1-2-2019-08",
+                "ELBSecurityPolicy-FS-1-2-Res-2019-08",
+                "ELBSecurityPolicy-FS-1-2-Res-2020-10"
+              ],
+              "description": "Optional. Specify an SSL policy for the HTTPS listener of your Internal Load Balancer, when applicable."
+            }
+          },
+          "additionalProperties": false,
+          "description": "Configuration for the internal load balancer."
+        }
+      },
+      "additionalProperties": false,
+      "description": "The http section contains parameters to configure the public load balancer shared by Load Balanced Web Services and the internal load balancer shared by Backend Services."
+    },
+    "observability": {
+      "type": "object",
+      "properties": {
+        "container_insights": {
+          "type": "boolean",
+          "description": "Whether to enable CloudWatch container insights in your environment's ECS cluster."
+        }
+      },
+      "additionalProperties": false,
+      "description": "The observability section lets you configure ways to collect data about the services and jobs deployed in your environment."
+    }
+  },
+  "required": ["name", "type"],
+  "additionalProperties": false
+}

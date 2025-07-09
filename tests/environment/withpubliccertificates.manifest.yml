@@ -1,0 +1,6 @@
+name: prod-pdx
+type: Environment
+http:
+  public: # Apply an existing certificate to your public load balancer.
+    certificates:
+      - arn:aws:acm:${AWS_REGION}:${AWS_ACCOUNT_ID}:certificate/13245665-cv8f-adf3-j7gd-adf876af95

@@ -1,0 +1,189 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "pattern": "^[a-zA-Z][a-zA-Z0-9-]*$",
+      "description": "The name of your service."
+    },
+    "type": {
+      "type": "string",
+      "const": "Backend Service",
+      "description": "The architecture type for your service. Backend Services are not reachable from the internet, but can be reached with service discovery from your other services."
+    },
+    "http": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "pattern": "^/.*$",
+          "description": "Requests to this path will be forwarded to your service. Each Backend Service should listen on a unique path."
+        },
+        "alb": {
+          "type": "string",
+          "description": "The ARN or name of an existing internal ALB to import. Listener rules will be added to your listener(s). Copilot will not manage DNS-related resources like certificates."
+        },
+        "healthcheck": {
+          "oneOf": [
+            {
+              "type": "string",
+              "pattern": "^/.*$",
+              "description": "If you specify a string, Copilot interprets it as the path exposed in your container to handle target group health check requests. The default is \"/\"."
+            },
+            {
+              "$ref": "./common-definitions.json#/$defs/http-healthcheck"
+            }
+          ]
+        },
+        "deregistration_delay": {
+          "$ref": "./common-definitions.json#/$defs/duration",
+          "description": "The amount of time to wait for targets to drain connections during deregistration. The default is 60s. Setting this to a larger value gives targets more time to gracefully drain connections, but increases the time required for new deployments. Range 0s-3600s."
+        },
+        "target_container": {
+          "type": "string",
+          "description": "A sidecar container that requests are routed to instead of the main service container. If the target container's port is set to 443, then the protocol is set to HTTPS so that the load balancer establishes TLS connections with the Fargate tasks using certificates that you install on the target container."
+        },
+        "stickiness": {
+          "type": "boolean",
+          "description": "Indicates whether sticky sessions are enabled."
+        },
+        "allowed_source_ips": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}/\\d{1,2}$"
+          },
+          "description": "CIDR IP addresses permitted to access your service."
+        },
+        "alias": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "hosted_zone": {
+                    "type": "string"
+                  }
+                },
+                "required": ["name"],
+                "additionalProperties": false
+              }
+            }
+          ],
+          "description": "HTTPS domain alias of your service."
+        },
+        "hosted_zone": {
+          "type": "string",
+          "description": "ID of existing private hosted zone, into which Copilot will insert the alias record once the internal load balancer is created, mapping the alias name to the LB's DNS name. Must be used with alias."
+        },
+        "version": {
+          "type": "string",
+          "enum": ["grpc", "http1", "http2"],
+          "description": "The HTTP(S) protocol version. Must be one of 'grpc', 'http1', or 'http2'. If omitted, then 'http1' is assumed. If using gRPC, please note that a domain must be associated with your application."
+        },
+        "additional_rules": {
+          "type": "array",
+          "items": {
+            "$ref": "./common-definitions.json#/$defs/http-additional-rule"
+          },
+          "description": "Configure multiple ALB listener rules."
+        }
+      },
+      "required": ["path"],
+      "additionalProperties": false,
+      "description": "The http section contains parameters related to integrating your service with an internal Application Load Balancer."
+    },
+    "image": {
+      "$ref": "./common-definitions.json#/$defs/image-config",
+      "description": "The image section contains parameters relating to the Docker build configuration or referring to an existing container image."
+    },
+    "cpu": {
+      "$ref": "./common-definitions.json#/$defs/cpu"
+    },
+    "memory": {
+      "$ref": "./common-definitions.json#/$defs/memory"
+    },
+    "platform": {
+      "$ref": "./common-definitions.json#/$defs/platform"
+    },
+    "count": {
+      "$ref": "./common-definitions.json#/$defs/count"
+    },
+    "exec": {
+      "type": "boolean",
+      "description": "Enable running commands in your container. The default is false. Required for $ copilot svc exec."
+    },
+    "deployment": {
+      "$ref": "./common-definitions.json#/$defs/deployment",
+      "description": "The deployment section contains parameters to control how many tasks run during the deployment and the ordering of stopping and starting tasks."
+    },
+    "entrypoint": {
+      "$ref": "./common-definitions.json#/$defs/entrypoint"
+    },
+    "command": {
+      "$ref": "./common-definitions.json#/$defs/command"
+    },
+    "sidecars": {
+      "$ref": "./common-definitions.json#/$defs/sidecars"
+    },
+    "network": {
+      "$ref": "./common-definitions.json#/$defs/network",
+      "description": "The network section contains parameters for connecting to AWS resources in a VPC."
+    },
+    "variables": {
+      "$ref": "./common-definitions.json#/$defs/environment-variables",
+      "description": "Key-value pairs that represent environment variables that will be passed to your service. Copilot will include a number of environment variables by default for you."
+    },
+    "env_file": {
+      "type": "string",
+      "description": "The path to a file from the root of your workspace containing the environment variables to pass to the main container. For more information about the environment variable file, see Considerations for specifying environment variable files."
+    },
+    "secrets": {
+      "$ref": "./common-definitions.json#/$defs/secrets",
+      "description": "Key-value pairs that represent secret values from AWS Systems Manager Parameter Store or AWS Secrets Manager that will be securely passed to your service as environment variables."
+    },
+    "storage": {
+      "$ref": "./common-definitions.json#/$defs/storage",
+      "description": "The Storage section lets you specify external EFS volumes for your containers and sidecars to mount. This allows you to access persistent storage across availability zones in a region for data processing or CMS workloads. For more detail, see the storage page. You can also specify extensible ephemeral storage at the task level."
+    },
+    "publish": {
+      "$ref": "./common-definitions.json#/$defs/publish",
+      "description": "The publish section allows services to publish messages to one or more SNS topics."
+    },
+    "logging": {
+      "$ref": "./common-definitions.json#/$defs/logging",
+      "description": "The logging section contains log configuration. You can also configure parameters for your container's FireLens log driver in this section."
+    },
+    "observability": {
+      "$ref": "./common-definitions.json#/$defs/observability",
+      "description": "The observability section lets you configure ways to measure your service's current state. Currently, only tracing configuration is supported."
+    },
+    "taskdef_overrides": {
+      "type": "array",
+      "items": {
+        "$ref": "./common-definitions.json#/$defs/taskdef-override"
+      },
+      "description": "The taskdef_overrides section allows users to apply overriding rules to their ECS Task Definitions."
+    },
+    "environments": {
+      "$ref": "./common-definitions.json#/$defs/environments",
+      "description": "The environment section lets you override any value in your manifest based on the environment you're in."
+    }
+  },
+  "required": ["name", "type"],
+  "additionalProperties": false
+}

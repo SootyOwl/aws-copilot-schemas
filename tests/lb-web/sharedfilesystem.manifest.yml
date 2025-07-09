@@ -1,0 +1,29 @@
+# See http://localhost:8000/copilot-cli/docs/developing/storage/#file-systems
+name: 'frontend'
+type: 'Load Balanced Web Service'
+
+image:
+  build: Dockerfile
+  port: 80
+  depends_on:
+    bootstrap: success
+
+http:
+  path: '/'
+
+storage:
+  volumes:
+    wp:
+      path: /bitnami/wordpress
+      read_only: false
+      efs: true
+
+# Hydrate the file system with some content using the bootstrap container.
+sidecars:
+  bootstrap:
+    image: aws_account_id.dkr.ecr.us-west-2.amazonaws.com/bootstrap:v1.0.0
+    essential: false
+    mount_points:
+      - source_volume: wp
+        path: /bitnami/wordpress
+        read_only: false

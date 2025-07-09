@@ -1,0 +1,16 @@
+name: onprem
+type: Environment
+network:
+  vpc:
+    id: 'vpc-12345678'
+    subnets:
+      private:
+        - id: 'subnet-11111111'
+        - id: 'subnet-abcdef12123456799'
+        - id: 'subnet-33333333'
+        - id: 'subnet-abcdef12123456789'
+http:
+  private: # Apply an existing certificate to your private load balancer.
+    certificates:
+      - arn:aws:acm:${AWS_REGION}:${AWS_ACCOUNT_ID}:certificate/13245665-cv8f-adf3-j7gd-adf876af95
+    subnets: ['subnet-11111111', 'subnet-abcdef12123456789']

@@ -1,0 +1,4 @@
+name: prod
+type: Environment
+observability:
+  container_insights: true

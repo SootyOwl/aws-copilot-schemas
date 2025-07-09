@@ -1,0 +1,13 @@
+# All egress traffic is routed though the environment VPC.
+name: frontend
+type: Request-Driven Web Service
+
+image:
+  build: ./frontend/Dockerfile
+  port: 8080
+cpu: 1024
+memory: 2048
+
+network:
+  vpc:
+    placement: private

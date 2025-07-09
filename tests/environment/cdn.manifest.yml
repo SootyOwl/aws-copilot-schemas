@@ -1,0 +1,7 @@
+name: cloudfront
+type: Environment
+cdn: true
+http:
+  public:
+    ingress:
+       cdn: true

@@ -1,0 +1,18 @@
+# See https://aws.github.io/copilot-cli/docs/developing/publish-subscribe/
+name: refunds
+type: Request-Driven Web Service
+
+image:
+  build: ./refunds/Dockerfile
+  port: 8080
+
+http:
+  alias: refunds.example.com
+cpu: 1024
+memory: 2048
+
+publish:
+  topics:
+    - name: 'refunds'
+    - name: 'orders'
+      fifo: true

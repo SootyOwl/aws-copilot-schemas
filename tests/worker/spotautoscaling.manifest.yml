@@ -1,0 +1,25 @@
+# Burst to Fargate Spot tasks if capacity is available.
+name: cost-analyzer
+type: Worker Service
+
+image:
+  build: ./cost-analyzer/Dockerfile
+
+subscribe:
+  topics:
+    - name: products
+      service: orders
+    - name: inventory
+      service: warehouse
+
+cpu: 256
+memory: 512
+count:
+  range:
+    min: 1
+    max: 10
+    spot_from: 2
+  queue_delay: # Ensure messages are processed within 10mins assuming a single message takes 250ms to process.
+    acceptable_latency: 10m
+    msg_processing_time: 250ms
+exec: true

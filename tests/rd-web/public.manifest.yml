@@ -1,0 +1,29 @@
+# Deploys a web service accessible at https://web.example.com.
+name: frontend
+type: Request-Driven Web Service
+
+http:
+  healthcheck: '/_healthcheck'
+  alias: web.example.com
+
+image:
+  build: ./frontend/Dockerfile
+  port: 80
+cpu: 1024
+memory: 2048
+
+variables:
+  LOG_LEVEL: info
+tags:
+  owner: frontend
+observability:
+  tracing: awsxray
+secrets:
+  GITHUB_TOKEN: GITHUB_TOKEN
+  DB_SECRET:
+    secretsmanager: 'mysql'
+
+environments:
+  test:
+    variables:
+      LOG_LEVEL: debug

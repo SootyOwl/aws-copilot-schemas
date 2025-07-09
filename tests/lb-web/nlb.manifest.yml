@@ -1,0 +1,21 @@
+name: 'frontend'
+type: 'Load Balanced Web Service'
+
+image:
+  build: Dockerfile
+  port: 8080
+
+http: false
+nlb:
+  alias: 'example.com'
+  port: 80/tcp
+  target_container: envoy
+
+network:
+  vpc:
+    placement: 'private'
+
+sidecars:
+  envoy:
+    port: 80
+    image: aws_account_id.dkr.ecr.us-west-2.amazonaws.com/envoy:latest

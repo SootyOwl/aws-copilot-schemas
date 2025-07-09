@@ -1,0 +1,16 @@
+# See http://localhost:8000/copilot-cli/docs/developing/storage/#file-systems
+name: sync
+type: Backend Service
+
+image:
+  build: Dockerfile
+
+variables:
+  S3_BUCKET_NAME: my-userdata-bucket
+
+storage:
+  volumes:
+    userdata:
+      path: /etc/mount1
+      efs:
+        id: fs-12345678

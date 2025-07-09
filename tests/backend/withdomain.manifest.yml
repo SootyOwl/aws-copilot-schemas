@@ -1,0 +1,16 @@
+# Assuming your environment has private certificates imported, you can assign
+# an HTTPS endpoint to your service.
+# See https://aws.github.io/copilot-cli/docs/manifest/environment/#http-private-certificates
+name: api
+type: Backend Service
+
+image:
+  build: ./api/Dockerfile
+  port: 8080
+
+http:
+  path: "/"
+  alias: "v1.api.example.com"
+  hosted_zone: AN0THE9H05TED20NEID # Insert record for v1.api.example.com to the hosted zone.
+
+count: 1
