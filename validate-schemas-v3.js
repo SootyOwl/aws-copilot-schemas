@@ -98,7 +98,8 @@ const schemaFiles = [
     'scheduled-job.json',
     'static-site.json',
     'worker-service.json',
-    'environment.json'
+    'environment.json',
+    'pipeline.json'
 ];
 
 schemaFiles.forEach(file => {
@@ -121,39 +122,45 @@ function validateManifest(filePath) {
         const content = fs.readFileSync(filePath, 'utf8');
         const manifest = yaml.load(content);
 
-        // Skip pipeline manifests as they don't have a "type" field
-        if (!manifest.type) {
-            console.log(`⚠️  ${filePath} - Skipping (no type field, likely a pipeline manifest)`);
-            return true;
-        }
-
-        // Determine which schema to use based on the type
+        // Determine which schema to use based on the type or manifest structure
         let schemaFile;
-        switch (manifest.type) {
-            case 'Backend Service':
-                schemaFile = 'backend-service.json';
-                break;
-            case 'Load Balanced Web Service':
-                schemaFile = 'lb-web-service.json';
-                break;
-            case 'Request-Driven Web Service':
-                schemaFile = 'rd-web-service.json';
-                break;
-            case 'Scheduled Job':
-                schemaFile = 'scheduled-job.json';
-                break;
-            case 'Static Site':
-                schemaFile = 'static-site.json';
-                break;
-            case 'Worker Service':
-                schemaFile = 'worker-service.json';
-                break;
-            case 'Environment':
-                schemaFile = 'environment.json';
-                break;
-            default:
-                console.error(`❌ Unknown type "${manifest.type}" in ${filePath}`);
-                return false;
+        
+        if (!manifest.type) {
+            // Check if this is a pipeline manifest by looking for pipeline-specific fields
+            if (manifest.source && manifest.stages && Array.isArray(manifest.stages)) {
+                schemaFile = 'pipeline.json';
+                console.log(`🔧 ${filePath} - Detected as Pipeline manifest`);
+            } else {
+                console.log(`⚠️  ${filePath} - Skipping (no type field and doesn't match pipeline structure)`);
+                return true;
+            }
+        } else {
+            switch (manifest.type) {
+                case 'Backend Service':
+                    schemaFile = 'backend-service.json';
+                    break;
+                case 'Load Balanced Web Service':
+                    schemaFile = 'lb-web-service.json';
+                    break;
+                case 'Request-Driven Web Service':
+                    schemaFile = 'rd-web-service.json';
+                    break;
+                case 'Scheduled Job':
+                    schemaFile = 'scheduled-job.json';
+                    break;
+                case 'Static Site':
+                    schemaFile = 'static-site.json';
+                    break;
+                case 'Worker Service':
+                    schemaFile = 'worker-service.json';
+                    break;
+                case 'Environment':
+                    schemaFile = 'environment.json';
+                    break;
+                default:
+                    console.error(`❌ Unknown type "${manifest.type}" in ${filePath}`);
+                    return false;
+            }
         }
 
         if (!schemas[schemaFile]) {
@@ -174,7 +181,8 @@ function validateManifest(filePath) {
             });
             return false;
         } else {
-            console.log(`✅ ${filePath} is valid (${manifest.type})`);
+            const manifestType = manifest.type || 'Pipeline';
+            console.log(`✅ ${filePath} is valid (${manifestType})`);
             return true;
         }
     } catch (error) {

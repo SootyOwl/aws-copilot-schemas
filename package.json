@@ -7,8 +7,8 @@
     "test": "tests"
   },
   "scripts": {
-    "test": "node validate-schemas.js",
-    "validate": "node validate-schemas.js"
+    "test": "node validate-schemas-v3.js",
+    "validate": "node validate-top-level.js"
   },
   "repository": {
     "type": "git",
