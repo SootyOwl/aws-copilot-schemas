@@ -1,5 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Load Balanced Web Service manifest for AWS Copilot\nhttps://aws.github.io/copilot-cli/docs/manifest/lb-web-service/",
   "type": "object",
   "properties": {
     "name": {

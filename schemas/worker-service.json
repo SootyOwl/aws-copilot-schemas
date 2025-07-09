@@ -1,5 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Worker Service manifest for AWS Copilot\nhttps://aws.github.io/copilot-cli/docs/manifest/worker-service/",
   "type": "object",
   "properties": {
     "name": {

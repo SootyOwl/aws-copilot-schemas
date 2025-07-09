@@ -1,60 +1,60 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "description": "AWS Copilot manifest schema with comprehensive validation for all manifest types",
+  "description": "AWS Copilot manifest schema with comprehensive validation for all manifest types\nhttps://aws.github.io/copilot-cli/docs/manifest/overview/",
   "type": "object",
   "required": ["name"],
   "oneOf": [
     {
-      "description": "Backend Service manifest",
+      "description": "Backend Service manifest\nhttps://aws.github.io/copilot-cli/docs/manifest/backend-service/",
       "allOf": [
         {"properties": {"type": {"const": "Backend Service"}}},
         {"$ref": "./backend-service.json"}
       ]
     },
     {
-      "description": "Load Balanced Web Service manifest",
+      "description": "Load Balanced Web Service manifest\nhttps://aws.github.io/copilot-cli/docs/manifest/lb-web-service/",
       "allOf": [
         {"properties": {"type": {"const": "Load Balanced Web Service"}}},
         {"$ref": "./lb-web-service.json"}
       ]
     },
     {
-      "description": "Request-Driven Web Service manifest",
+      "description": "Request-Driven Web Service manifest\nhttps://aws.github.io/copilot-cli/docs/manifest/rd-web-service/",
       "allOf": [
         {"properties": {"type": {"const": "Request-Driven Web Service"}}},
         {"$ref": "./rd-web-service.json"}
       ]
     },
     {
-      "description": "Scheduled Job manifest",
+      "description": "Scheduled Job manifest\nhttps://aws.github.io/copilot-cli/docs/manifest/scheduled-job/",
       "allOf": [
         {"properties": {"type": {"const": "Scheduled Job"}}},
         {"$ref": "./scheduled-job.json"}
       ]
     },
     {
-      "description": "Static Site manifest",
+      "description": "Static Site manifest\nhttps://aws.github.io/copilot-cli/docs/manifest/static-site/",
       "allOf": [
         {"properties": {"type": {"const": "Static Site"}}},
         {"$ref": "./static-site.json"}
       ]
     },
     {
-      "description": "Worker Service manifest",
+      "description": "Worker Service manifest\nhttps://aws.github.io/copilot-cli/docs/manifest/worker-service/",
       "allOf": [
         {"properties": {"type": {"const": "Worker Service"}}},
         {"$ref": "./worker-service.json"}
       ]
     },
     {
-      "description": "Environment manifest",
+      "description": "Environment manifest\nhttps://aws.github.io/copilot-cli/docs/manifest/environment/",
       "allOf": [
         {"properties": {"type": {"const": "Environment"}}},
         {"$ref": "./environment.json"}
       ]
     },
     {
-      "description": "Pipeline manifest (detected by structure)",
+      "description": "Pipeline manifest (detected by structure)\nhttps://aws.github.io/copilot-cli/docs/manifest/pipeline/",
       "allOf": [
         {
           "properties": {

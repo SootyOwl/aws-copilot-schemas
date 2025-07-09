@@ -30,9 +30,10 @@ Add this to the top of your YAML manifest files:
 
 - ✅ **Complete validation** for all AWS Copilot manifest types
 - ✅ **Auto-detection** of manifest type (no manual specification needed)
-- ✅ **Strict adherence** to AWS Copilot documentation
+- ✅ **Strict adherence** to [AWS Copilot documentation](https://aws.github.io/copilot-cli/docs/manifest/overview/)
 - ✅ **Comprehensive error reporting** 
 - ✅ **VS Code IntelliSense** and validation support
+- ✅ **SchemaStore compatible** with proper documentation URLs
 - ✅ **All manifest types supported**:
   - Backend Service
   - Load Balanced Web Service
