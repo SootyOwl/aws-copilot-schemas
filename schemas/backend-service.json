@@ -20,6 +20,10 @@
           "pattern": "^/.*$",
           "description": "Requests to this path will be forwarded to your service. Each Backend Service should listen on a unique path."
         },
+        "target_port": {
+          "$ref": "./common-definitions.json#/$defs/port-value",
+          "description": "Optional. The container port that receives traffic. By default, this will be image.port if the target container is the main container, or sidecars.<name>.port if the target container is a sidecar."
+        },
         "alb": {
           "type": "string",
           "description": "The ARN or name of an existing internal ALB to import. Listener rules will be added to your listener(s). Copilot will not manage DNS-related resources like certificates."

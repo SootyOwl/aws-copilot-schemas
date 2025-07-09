@@ -3,7 +3,7 @@
   "$defs": {
     "duration": {
       "type": "string",
-      "pattern": "^\\d+[smh]$",
+      "pattern": "^\\d+(ms|[smhd])$",
       "description": "Duration string (e.g., 30s, 5m, 1h)"
     },
     "platform": {
@@ -17,14 +17,26 @@
           "properties": {
             "osfamily": {
               "type": "string",
-              "enum": ["linux", "windows_server_2019_core", "windows_server_2019_full", "windows_server_2022_core", "windows_server_2022_full"]
+              "enum": [
+                "linux",
+                "windows_server_2019_core",
+                "windows_server_2019_full",
+                "windows_server_2022_core",
+                "windows_server_2022_full"
+              ]
             },
             "architecture": {
               "type": "string",
-              "enum": ["x86_64", "arm64"]
+              "enum": [
+                "x86_64",
+                "arm64"
+              ]
             }
           },
-          "required": ["osfamily", "architecture"],
+          "required": [
+            "osfamily",
+            "architecture"
+          ],
           "additionalProperties": false
         }
       ],
@@ -45,12 +57,30 @@
     },
     "cpu": {
       "type": "integer",
-      "enum": [256, 512, 1024, 2048, 4096],
+      "enum": [
+        256,
+        512,
+        1024,
+        2048,
+        4096
+      ],
       "description": "Number of CPU units for the task. See the Amazon ECS docs for valid CPU values."
     },
     "memory": {
       "type": "integer",
-      "enum": [512, 1024, 2048, 3072, 4096, 5120, 6144, 7168, 8192, 16384, 30720],
+      "enum": [
+        512,
+        1024,
+        2048,
+        3072,
+        4096,
+        5120,
+        6144,
+        7168,
+        8192,
+        16384,
+        30720
+      ],
       "description": "Amount of memory in MiB used by the task. See the Amazon ECS docs for valid memory values."
     },
     "entrypoint": {
@@ -144,7 +174,10 @@
                   "description": "Whether to allow the sidecar read-only access to the volume (default true)."
                 }
               },
-              "required": ["source_volume", "path"],
+              "required": [
+                "source_volume",
+                "path"
+              ],
               "additionalProperties": false
             },
             "description": "Mount paths for EFS volumes specified at the service level (optional)."
@@ -160,7 +193,12 @@
             "type": "object",
             "additionalProperties": {
               "type": "string",
-              "enum": ["start", "healthy", "complete", "success"]
+              "enum": [
+                "start",
+                "healthy",
+                "complete",
+                "success"
+              ]
             },
             "description": "Container dependencies to apply to this container (optional)."
           },
@@ -204,7 +242,9 @@
             "description": "Optional configuration for sidecar container health checks."
           }
         },
-        "required": ["image"],
+        "required": [
+          "image"
+        ],
         "additionalProperties": false
       },
       "description": "Sidecar containers to run alongside the main container."
@@ -243,7 +283,14 @@
                 "args": {
                   "type": "object",
                   "additionalProperties": {
+                  "oneOf": [
+                    {
                     "type": "string"
+                    },
+                    {
+                    "type": "integer"
+                    }
+                  ]
                   },
                   "description": "Build arguments"
                 }
@@ -273,7 +320,12 @@
           "type": "object",
           "additionalProperties": {
             "type": "string",
-            "enum": ["start", "healthy", "complete", "success"]
+            "enum": [
+              "start",
+              "healthy",
+              "complete",
+              "success"
+            ]
           },
           "description": "An optional key/value map of Container Dependencies to add to the container. The key of the map is a container name and the value is the condition to depend on. Valid conditions are: start, healthy, complete, and success. You cannot specify a complete or success dependency on an essential container."
         },
@@ -317,10 +369,14 @@
       },
       "oneOf": [
         {
-          "required": ["build"]
+          "required": [
+            "build"
+          ]
         },
         {
-          "required": ["location"]
+          "required": [
+            "location"
+          ]
         }
       ],
       "additionalProperties": false
@@ -376,7 +432,7 @@
       "properties": {
         "path": {
           "type": "string",
-          "pattern": "^/.*$",
+          "pattern": "^/?.*$",
           "description": "Requests to this path will be forwarded to your service. Each listener rule should listen on a unique path."
         },
         "healthcheck": {
@@ -400,7 +456,7 @@
           "description": "A sidecar container that requests are routed to instead of the main service container. If the target container's port is set to 443, then the protocol is set to HTTPS so that the load balancer establishes TLS connections with the Fargate tasks using certificates that you install on the target container."
         },
         "target_port": {
-          "type": "string",
+          "$ref": "#/$defs/port-value",
           "description": "The container port that receives traffic. Specify this field if the container port is different from image.port for the main container or sidecar.port for the sidecar containers."
         },
         "stickiness": {
@@ -438,7 +494,9 @@
                     "type": "string"
                   }
                 },
-                "required": ["name"],
+                "required": [
+                  "name"
+                ],
                 "additionalProperties": false
               }
             }
@@ -455,11 +513,17 @@
         },
         "version": {
           "type": "string",
-          "enum": ["grpc", "http1", "http2"],
+          "enum": [
+            "grpc",
+            "http1",
+            "http2"
+          ],
           "description": "The HTTP(S) protocol version. Must be one of 'grpc', 'http1', or 'http2'. If omitted, then 'http1' is assumed. If using gRPC, please note that a domain must be associated with your application."
         }
       },
-      "required": ["path"],
+      "required": [
+        "path"
+      ],
       "additionalProperties": false
     },
     "nlb-healthcheck": {
@@ -513,9 +577,7 @@
           "description": "A sidecar container that takes the place of a service container."
         },
         "target_port": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 65535,
+          "$ref": "#/$defs/port-value",
           "description": "The container port that receives traffic. Specify this field if the container port is different from nlb.port, the listener port."
         },
         "ssl_policy": {
@@ -527,7 +589,9 @@
           "description": "Indicates whether sticky sessions are enabled."
         }
       },
-      "required": ["port"],
+      "required": [
+        "port"
+      ],
       "additionalProperties": false
     },
     "scaling-config": {
@@ -564,7 +628,10 @@
                   "description": "The desired count at which you wish to start placing your service using Fargate Spot capacity providers."
                 }
               },
-              "required": ["min", "max"],
+              "required": [
+                "min",
+                "max"
+              ],
               "additionalProperties": false
             }
           ]
@@ -603,7 +670,9 @@
                   "$ref": "#/$defs/scaling-config/properties/cooldown"
                 }
               },
-              "required": ["value"],
+              "required": [
+                "value"
+              ],
               "additionalProperties": false
             }
           ],
@@ -628,7 +697,9 @@
                   "$ref": "#/$defs/scaling-config/properties/cooldown"
                 }
               },
-              "required": ["value"],
+              "required": [
+                "value"
+              ],
               "additionalProperties": false
             }
           ],
@@ -651,7 +722,9 @@
                   "$ref": "#/$defs/scaling-config/properties/cooldown"
                 }
               },
-              "required": ["value"],
+              "required": [
+                "value"
+              ],
               "additionalProperties": false
             }
           ],
@@ -672,11 +745,36 @@
                   "$ref": "#/$defs/scaling-config/properties/cooldown"
                 }
               },
-              "required": ["value"],
+              "required": [
+                "value"
+              ],
               "additionalProperties": false
             }
           ],
           "description": "Scale up or down based on the service average response time."
+        },
+        "queue_delay": {
+          "type": "object",
+          "properties": {
+            "acceptable_latency": {
+              "$ref": "#/$defs/duration",
+              "description": "The acceptable amount of time that a message can sit in the queue. For example, '45s', '5m', '10h'."
+            },
+            "msg_processing_time": {
+              "$ref": "#/$defs/duration",
+              "description": "The average amount of time it takes to process an SQS message. For example, '250ms', '1s'."
+            },
+            "cooldown": {
+              "$ref": "#/$defs/scaling-config/properties/cooldown",
+              "description": "Scale up and down cooldown fields for queue delay autoscaling."
+            }
+          },
+          "required": [
+            "acceptable_latency",
+            "msg_processing_time"
+          ],
+          "additionalProperties": false,
+          "description": "Scale up or down to maintain an acceptable queue latency by tracking against the acceptable backlog per task."
         }
       },
       "additionalProperties": false
@@ -686,7 +784,10 @@
       "properties": {
         "rolling": {
           "type": "string",
-          "enum": ["default", "recreate"],
+          "enum": [
+            "default",
+            "recreate"
+          ],
           "description": "Rolling deployment strategy. Valid values are 'default' and 'recreate'."
         },
         "rollback_alarms": {
@@ -712,6 +813,11 @@
                   "minimum": 0,
                   "maximum": 100,
                   "description": "Percentage value at or above which alarm is triggered."
+                },
+                "messages_delayed": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Number of delayed messages in the queue at or above which alarm is triggered."
                 }
               },
               "additionalProperties": false
@@ -750,7 +856,10 @@
               "oneOf": [
                 {
                   "type": "string",
-                  "enum": ["public", "private"],
+                  "enum": [
+                    "public",
+                    "private"
+                  ],
                   "description": "When using it as a string, the value must be one of 'public' or 'private'. Defaults to launching your tasks in public subnets."
                 },
                 {
@@ -787,13 +896,17 @@
                               "description": "Tag sets by which to filter subnets where Copilot should launch ECS tasks."
                             }
                           },
-                          "required": ["from_tags"],
+                          "required": [
+                            "from_tags"
+                          ],
                           "additionalProperties": false
                         }
                       ]
                     }
                   },
-                  "required": ["subnets"],
+                  "required": [
+                    "subnets"
+                  ],
                   "additionalProperties": false
                 }
               ]
@@ -817,7 +930,9 @@
                             "description": "The name of a CloudFormation stack export."
                           }
                         },
-                        "required": ["from_cfn"],
+                        "required": [
+                          "from_cfn"
+                        ],
                         "additionalProperties": false
                       }
                     ]
@@ -834,29 +949,6 @@
                     "deny_default": {
                       "type": "boolean",
                       "description": "Disable the default security group that allows ingress from all services in your environment."
-                    },
-                    "groups": {
-                      "oneOf": [
-                        {
-                          "type": "array",
-                          "items": {
-                            "type": "string",
-                            "pattern": "^sg-[a-f0-9]{8}([a-f0-9]{9})?$"
-                          },
-                          "description": "Additional security group IDs associated with your tasks."
-                        },
-                        {
-                          "type": "object",
-                          "properties": {
-                            "from_cfn": {
-                              "type": "string",
-                              "description": "The name of a CloudFormation stack export."
-                            }
-                          },
-                          "required": ["from_cfn"],
-                          "additionalProperties": false
-                        }
-                      ]
                     }
                   },
                   "additionalProperties": false
@@ -885,7 +977,9 @@
                 "description": "The name of a CloudFormation stack export."
               }
             },
-            "required": ["from_cfn"],
+            "required": [
+              "from_cfn"
+            ],
             "additionalProperties": false
           }
         ]
@@ -968,7 +1062,9 @@
                                 "description": "The name of a CloudFormation stack export."
                               }
                             },
-                            "required": ["from_cfn"],
+                            "required": [
+                              "from_cfn"
+                            ],
                             "additionalProperties": false
                           }
                         ]
@@ -1014,7 +1110,9 @@
                 "description": "Specify more detailed EFS configuration. If specified as a boolean, or using only the uid and gid subfields, creates a managed EFS filesystem and dedicated Access Point for this workload."
               }
             },
-            "required": ["path"],
+            "required": [
+              "path"
+            ],
             "additionalProperties": false
           },
           "description": "Specify the name and configuration of any EFS volumes you would like to attach."
@@ -1054,7 +1152,9 @@
                 "description": "FIFO (first in, first out) SNS topic configuration. If you specify true, Copilot will create the topic with FIFO ordering."
               }
             },
-            "required": ["name"],
+            "required": [
+              "name"
+            ],
             "additionalProperties": false
           },
           "description": "List of topic objects."
@@ -1067,7 +1167,25 @@
       "properties": {
         "retention": {
           "type": "integer",
-          "enum": [1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1827, 3653],
+          "enum": [
+            1,
+            3,
+            5,
+            7,
+            14,
+            30,
+            60,
+            90,
+            120,
+            150,
+            180,
+            365,
+            400,
+            545,
+            731,
+            1827,
+            3653
+          ],
           "description": "Optional. The number of days to retain the log events. See this page for all accepted values. If omitted, the default is 30."
         },
         "image": {
@@ -1102,7 +1220,9 @@
       "properties": {
         "tracing": {
           "type": "string",
-          "enum": ["awsxray"],
+          "enum": [
+            "awsxray"
+          ],
           "description": "The vendor to use for tracing. Currently, only awsxray is supported."
         }
       },
@@ -1119,7 +1239,10 @@
           "description": "Required. Value of the Task Definition field to override."
         }
       },
-      "required": ["path", "value"],
+      "required": [
+        "path",
+        "value"
+      ],
       "additionalProperties": false
     },
     "environments": {
@@ -1150,10 +1273,14 @@
       },
       "oneOf": [
         {
-          "required": ["id"]
+          "required": [
+            "id"
+          ]
         },
         {
-          "required": ["cidr"]
+          "required": [
+            "cidr"
+          ]
         }
       ],
       "additionalProperties": false
@@ -1185,8 +1312,133 @@
           "description": "The IPv4 address range, in CIDR format."
         }
       },
-      "required": ["ip_protocol", "cidr"],
+      "required": [
+        "ip_protocol",
+        "cidr"
+      ],
       "additionalProperties": false
+    },
+    "queue-config": {
+      "type": "object",
+      "properties": {
+        "delay": {
+          "$ref": "#/$defs/duration",
+          "description": "The time in seconds for which the delivery of all messages in the queue is delayed. Default 0s. Range 0s-15m."
+        },
+        "retention": {
+          "$ref": "#/$defs/duration",
+          "description": "Retention specifies the time a message will remain in the queue before being deleted. Default 4d. Range 60s-336h."
+        },
+        "timeout": {
+          "$ref": "#/$defs/duration",
+          "description": "Timeout defines the length of time a message is unavailable after being delivered. Default 30s. Range 0s-12h."
+        },
+        "fifo": {
+          "oneOf": [
+            {
+              "type": "boolean",
+              "description": "Enable FIFO (first in, first out) ordering on your SQS queue."
+            },
+            {
+              "type": "object",
+              "properties": {
+                "content_based_deduplication": {
+                  "type": "boolean",
+                  "description": "If the message body is guaranteed to be unique for each published message, you can enable content-based deduplication for the SNS FIFO topic."
+                },
+                "deduplication_scope": {
+                  "type": "string",
+                  "enum": [
+                    "messageGroup",
+                    "queue"
+                  ],
+                  "description": "For high throughput for FIFO queues, specifies whether message deduplication occurs at the message group or queue level."
+                },
+                "throughput_limit": {
+                  "type": "string",
+                  "enum": [
+                    "perQueue",
+                    "perMessageGroupId"
+                  ],
+                  "description": "For high throughput for FIFO queues, specifies whether the FIFO queue throughput quota applies to the entire queue or per message group."
+                },
+                "high_throughput": {
+                  "type": "boolean",
+                  "description": "If enabled, provides higher transactions per second (TPS) for messages in FIFO queues. Mutually exclusive with deduplication_scope and throughput_limit."
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "dead_letter": {
+          "type": "object",
+          "properties": {
+            "tries": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "If specified, creates a dead letter queue and a redrive policy which routes messages to the DLQ after tries attempts."
+            }
+          },
+          "required": [
+            "tries"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "subscribe-config": {
+      "type": "object",
+      "properties": {
+        "topics": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Required. The name of the SNS topic to subscribe to."
+              },
+              "service": {
+                "type": "string",
+                "description": "Required. The service this SNS topic is exposed by."
+              },
+              "filter_policy": {
+                "type": "object",
+                "description": "Optional. Specify a SNS subscription filter policy to evaluate incoming message attributes against the policy."
+              },
+              "queue": {
+                "oneOf": [
+                  {
+                    "type": "boolean",
+                    "description": "If specified as true, the queue will be created with default configuration."
+                  },
+                  {
+                    "$ref": "#/$defs/queue-config"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "name",
+              "service"
+            ],
+            "additionalProperties": false
+          },
+          "description": "Contains information about which SNS topics the worker service should subscribe to."
+        },
+        "queue": {
+          "$ref": "#/$defs/queue-config",
+          "description": "By default, a service level queue is always created. queue allows customization of certain attributes of that default queue."
+        }
+      },
+      "additionalProperties": false
+    },
+    "port-value": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 65535
     }
   }
 }

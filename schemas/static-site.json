@@ -1,0 +1,69 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "pattern": "^[a-zA-Z][a-zA-Z0-9-]*$",
+      "description": "The name of your service."
+    },
+    "type": {
+      "type": "string",
+      "const": "Static Site",
+      "description": "The architecture type for your service. A Static Site is an internet-facing service that is hosted by Amazon S3."
+    },
+    "http": {
+      "type": "object",
+      "properties": {
+        "alias": {
+          "type": "string",
+          "description": "HTTPS domain alias of your service."
+        },
+        "certificate": {
+          "type": "string",
+          "pattern": "^arn:aws:acm:us-east-1:",
+          "description": "The ARN for the certificate used for your HTTPS traffic. CloudFront requires imported certificates to be in the us-east-1 region."
+        }
+      },
+      "additionalProperties": false,
+      "description": "Configuration for incoming traffic to your site."
+    },
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string",
+            "description": "The path, relative to your workspace root, to the directory or file to upload to S3."
+          },
+          "recursive": {
+            "type": "boolean",
+            "description": "Whether or not the source directory should be uploaded recursively. Defaults to true for directories."
+          },
+          "destination": {
+            "type": "string",
+            "description": "Optional. The subpath to be prepended to your files in your S3 bucket. Default value is ."
+          },
+          "exclude": {
+            "type": "string",
+            "description": "Optional. Pattern-matched filters to exclude files from upload. Acceptable symbols are: * (matches everything), ? (matches any single character), [sequence] (matches any character in sequence), [!sequence] (matches any character not in sequence)."
+          },
+          "reinclude": {
+            "type": "string",
+            "description": "Optional. Pattern-matched filters to reinclude files that have been excluded from upload via exclude. Acceptable symbols are: * (matches everything), ? (matches any single character), [sequence] (matches any character in sequence), [!sequence] (matches any character not in sequence)."
+          }
+        },
+        "required": ["source"],
+        "additionalProperties": false
+      },
+      "description": "Parameters related to your static assets."
+    },
+    "environments": {
+      "$ref": "./common-definitions.json#/$defs/environments",
+      "description": "The environment section lets you override any value in your manifest based on the environment you're in."
+    }
+  },
+  "required": ["name", "type"],
+  "additionalProperties": false
+}

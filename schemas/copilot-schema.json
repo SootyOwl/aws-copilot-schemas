@@ -14,6 +14,18 @@
       "$ref": "./lb-web-service.json"
     },
     {
+      "$ref": "./rd-web-service.json"
+    },
+    {
+      "$ref": "./scheduled-job.json"
+    },
+    {
+      "$ref": "./static-site.json"
+    },
+    {
+      "$ref": "./worker-service.json"
+    },
+    {
       "$ref": "./environment.json"
     }
   ]

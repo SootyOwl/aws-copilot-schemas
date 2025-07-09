@@ -1,0 +1,135 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "pattern": "^[a-zA-Z][a-zA-Z0-9-]*$",
+      "description": "The name of your service."
+    },
+    "type": {
+      "type": "string",
+      "const": "Worker Service",
+      "description": "The architecture type for your service. Worker Services are not reachable from the internet or elsewhere in the VPC. They are designed to pull messages from their associated SQS queues, which are populated by their subscriptions to SNS topics created by other Copilot services' publish fields."
+    },
+    "subscribe": {
+      "$ref": "./common-definitions.json#/$defs/subscribe-config",
+      "description": "The subscribe section allows worker services to create subscriptions to the SNS topics exposed by other Copilot services in the same application and environment."
+    },
+    "image": {
+      "$ref": "./common-definitions.json#/$defs/image-config",
+      "description": "The image section contains parameters relating to the Docker build configuration or referring to an existing container image."
+    },
+    "cpu": {
+      "$ref": "./common-definitions.json#/$defs/cpu"
+    },
+    "memory": {
+      "$ref": "./common-definitions.json#/$defs/memory"
+    },
+    "platform": {
+      "$ref": "./common-definitions.json#/$defs/platform"
+    },
+    "count": {
+      "oneOf": [
+        {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        {
+          "type": "object",
+          "properties": {
+            "spot": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "If you want to use Fargate Spot capacity to run your services, you can specify a number under the spot subfield."
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "range": {
+              "$ref": "./common-definitions.json#/$defs/scaling-config/properties/range"
+            },
+            "cooldown": {
+              "$ref": "./common-definitions.json#/$defs/scaling-config/properties/cooldown"
+            },
+            "cpu_percentage": {
+              "$ref": "./common-definitions.json#/$defs/scaling-config/properties/cpu_percentage"
+            },
+            "memory_percentage": {
+              "$ref": "./common-definitions.json#/$defs/scaling-config/properties/memory_percentage"
+            },
+            "queue_delay": {
+              "$ref": "./common-definitions.json#/$defs/scaling-config/properties/queue_delay"
+            }
+          },
+          "required": ["range"],
+          "additionalProperties": false
+        }
+      ],
+      "description": "The number of tasks that your service should maintain."
+    },
+    "exec": {
+      "type": "boolean",
+      "description": "Enable running commands in your container. The default is false. Required for $ copilot svc exec."
+    },
+    "deployment": {
+      "$ref": "./common-definitions.json#/$defs/deployment",
+      "description": "The deployment section contains parameters to control how many tasks run during the deployment and the ordering of stopping and starting tasks."
+    },
+    "entrypoint": {
+      "$ref": "./common-definitions.json#/$defs/entrypoint"
+    },
+    "command": {
+      "$ref": "./common-definitions.json#/$defs/command"
+    },
+    "network": {
+      "$ref": "./common-definitions.json#/$defs/network",
+      "description": "The network section contains parameters for connecting to AWS resources in a VPC."
+    },
+    "variables": {
+      "$ref": "./common-definitions.json#/$defs/environment-variables",
+      "description": "Key-value pairs that represent environment variables that will be passed to your service. Copilot will include a number of environment variables by default for you."
+    },
+    "env_file": {
+      "type": "string",
+      "description": "The path to a file from the root of your workspace containing the environment variables to pass to the main container. For more information about the environment variable file, see Considerations for specifying environment variable files."
+    },
+    "secrets": {
+      "$ref": "./common-definitions.json#/$defs/secrets",
+      "description": "Key-value pairs that represent secret values from AWS Systems Manager Parameter Store or AWS Secrets Manager that will be securely passed to your service as environment variables."
+    },
+    "storage": {
+      "$ref": "./common-definitions.json#/$defs/storage",
+      "description": "The Storage section lets you specify external EFS volumes for your containers and sidecars to mount. This allows you to access persistent storage across availability zones in a region for data processing or CMS workloads. For more detail, see the storage page. You can also specify extensible ephemeral storage at the task level."
+    },
+    "publish": {
+      "$ref": "./common-definitions.json#/$defs/publish",
+      "description": "The publish section allows services to publish messages to one or more SNS topics."
+    },
+    "logging": {
+      "$ref": "./common-definitions.json#/$defs/logging",
+      "description": "The logging section contains log configuration. You can also configure parameters for your container's FireLens log driver in this section."
+    },
+    "observability": {
+      "$ref": "./common-definitions.json#/$defs/observability",
+      "description": "The observability section lets you configure ways to measure your service's current state. Currently, only tracing configuration is supported."
+    },
+    "taskdef_overrides": {
+      "type": "array",
+      "items": {
+        "$ref": "./common-definitions.json#/$defs/taskdef-override"
+      },
+      "description": "The taskdef_overrides section allows users to apply overriding rules to their ECS Task Definitions."
+    },
+    "environments": {
+      "$ref": "./common-definitions.json#/$defs/environments",
+      "description": "The environment section lets you override any value in your manifest based on the environment you're in."
+    }
+  },
+  "required": ["name", "type", "subscribe"],
+  "additionalProperties": false
+}

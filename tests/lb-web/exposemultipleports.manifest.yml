@@ -1,8 +1,8 @@
-name: 'frontend'
-type: 'Load Balanced Web Service'
+name: "frontend"
+type: "Load Balanced Web Service"
 
 image:
-  build: './frontend/Dockerfile'
+  build: "./frontend/Dockerfile"
   port: 8080
 
 nlb:

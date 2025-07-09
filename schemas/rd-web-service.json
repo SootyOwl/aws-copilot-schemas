@@ -1,0 +1,219 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "pattern": "^[a-zA-Z][a-zA-Z0-9-]*$",
+      "description": "The name of your service."
+    },
+    "type": {
+      "type": "string",
+      "const": "Request-Driven Web Service",
+      "description": "The architecture type for your service. A Request-Driven Web Service is an internet-facing service that is deployed on AWS App Runner."
+    },
+    "http": {
+      "type": "object",
+      "properties": {
+        "private": {
+          "oneOf": [
+            {
+              "type": "boolean",
+              "description": "Restrict incoming traffic to only your environment. Defaults to false."
+            },
+            {
+              "type": "object",
+              "properties": {
+                "endpoint": {
+                  "type": "string",
+                  "description": "The ID of an existing VPC Endpoint to App Runner."
+                }
+              },
+              "required": ["endpoint"],
+              "additionalProperties": false
+            }
+          ]
+        },
+        "healthcheck": {
+          "oneOf": [
+            {
+              "type": "string",
+              "pattern": "^/.*$",
+              "description": "If you specify a string, Copilot interprets it as the path exposed in your container to handle target group health check requests. The default is \"/\"."
+            },
+            {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "pattern": "^/.*$",
+                  "description": "The destination that the health check requests are sent to."
+                },
+                "healthy_threshold": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 20,
+                  "description": "The number of consecutive health check successes required before considering an unhealthy target healthy. The default is 3. Range: 1-20."
+                },
+                "unhealthy_threshold": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 20,
+                  "description": "The number of consecutive health check failures required before considering a target unhealthy. The default is 3. Range: 1-20."
+                },
+                "interval": {
+                  "$ref": "./common-definitions.json#/$defs/duration",
+                  "description": "The approximate amount of time, in seconds, between health checks of an individual target. The default is 5s. Range: 1s–20s."
+                },
+                "timeout": {
+                  "$ref": "./common-definitions.json#/$defs/duration",
+                  "description": "The amount of time, in seconds, during which no response from a target means a failed health check. The default is 2s. Range 1s-20s."
+                }
+              },
+              "required": ["path"],
+              "additionalProperties": false
+            }
+          ]
+        },
+        "alias": {
+          "type": "string",
+          "description": "Assign a friendly domain name to your request-driven web services. To learn more see developing/domain."
+        }
+      },
+      "additionalProperties": false,
+      "description": "The http section contains parameters related to the managed load balancer."
+    },
+    "image": {
+      "type": "object",
+      "properties": {
+        "build": {
+          "oneOf": [
+            {
+              "type": "string",
+              "description": "If you specify a string, Copilot interprets it as the path to your Dockerfile. It will assume that the dirname of the string you specify should be the build context."
+            },
+            {
+              "type": "object",
+              "properties": {
+                "dockerfile": {
+                  "type": "string",
+                  "description": "Path to the Dockerfile"
+                },
+                "context": {
+                  "type": "string",
+                  "description": "Build context directory"
+                },
+                "target": {
+                  "type": "string",
+                  "description": "Build target stage"
+                },
+                "cache_from": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Cache from images"
+                },
+                "args": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "description": "Build arguments"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "location": {
+          "type": "string",
+          "description": "Instead of building a container from a Dockerfile, you can specify an existing image name. Mutually exclusive with image.build. Note: Only public images stored in Amazon ECR Public are available with AWS App Runner."
+        },
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535,
+          "description": "The port exposed in your Dockerfile. Copilot should parse this value for you from your EXPOSE instruction."
+        }
+      },
+      "oneOf": [
+        {
+          "required": ["build"]
+        },
+        {
+          "required": ["location"]
+        }
+      ],
+      "additionalProperties": false,
+      "description": "The image section contains parameters relating to the Docker build configuration and exposed port."
+    },
+    "cpu": {
+      "type": "integer",
+      "enum": [256, 512, 1024, 2048],
+      "description": "Number of CPU units reserved for each instance of your service. See the AWS App Runner docs for valid CPU values."
+    },
+    "memory": {
+      "type": "integer",
+      "enum": [512, 1024, 2048, 3072, 4096, 6144, 8192, 10240, 12288],
+      "description": "Amount of memory in MiB reserved for each instance of your service. See the AWS App Runner docs for valid memory values."
+    },
+    "network": {
+      "type": "object",
+      "properties": {
+        "vpc": {
+          "type": "object",
+          "properties": {
+            "placement": {
+              "type": "string",
+              "enum": ["private"],
+              "description": "The only valid option today is 'private'. If you prefer the service not to be connected to a VPC, you can remove the network field."
+            }
+          },
+          "required": ["placement"],
+          "additionalProperties": false,
+          "description": "Subnets in the VPC to route egress traffic from the service."
+        }
+      },
+      "additionalProperties": false,
+      "description": "The network section contains parameters for connecting the service to AWS resources in the environment's VPC."
+    },
+    "observability": {
+      "$ref": "./common-definitions.json#/$defs/observability",
+      "description": "The observability section lets you configure ways to measure your service's current state. Currently, only tracing configuration is supported."
+    },
+    "command": {
+      "$ref": "./common-definitions.json#/$defs/command",
+      "description": "Optional. Override the default command in the image."
+    },
+    "variables": {
+      "$ref": "./common-definitions.json#/$defs/environment-variables",
+      "description": "Key-value pairs that represent environment variables that will be passed to your service. Copilot will include a number of environment variables by default for you."
+    },
+    "secrets": {
+      "$ref": "./common-definitions.json#/$defs/secrets",
+      "description": "Key-value pairs that represent secret values from AWS Systems Manager Parameter Store or AWS Secrets Manager that will be securely passed to your service as environment variables."
+    },
+    "publish": {
+      "$ref": "./common-definitions.json#/$defs/publish",
+      "description": "The publish section allows services to publish messages to one or more SNS topics."
+    },
+    "tags": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "Key-value pairs representing AWS tags that are passed down to your AWS App Runner resources."
+    },
+    "count": {
+      "type": "string",
+      "description": "Specify the name of an existing autoscaling configuration."
+    },
+    "environments": {
+      "$ref": "./common-definitions.json#/$defs/environments",
+      "description": "The environment section lets you override any value in your manifest based on the environment you're in."
+    }
+  },
+  "required": ["name", "type"],
+  "additionalProperties": false
+}

@@ -1,0 +1,129 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+        "name": {
+            "type": "string",
+            "pattern": "^[a-zA-Z][a-zA-Z0-9-]*$",
+            "description": "The name of your job."
+        },
+        "type": {
+            "type": "string",
+            "const": "Scheduled Job",
+            "description": "The architecture type for your job. Currently, Copilot only supports the 'Scheduled Job' type for tasks that are triggered either on a fixed schedule or periodically."
+        },
+        "on": {
+            "type": "object",
+            "properties": {
+                "schedule": {
+                    "oneOf": [
+                        {
+                            "type": "string",
+                            "enum": [
+                                "@yearly",
+                                "@monthly",
+                                "@weekly",
+                                "@daily",
+                                "@hourly",
+                                "none"
+                            ],
+                            "description": "Predefined schedule expressions"
+                        },
+                        {
+                            "type": "string",
+                            "pattern": "^@every\\s+\\d+[smh]$",
+                            "description": "Duration-based schedule (@every {duration})"
+                        },
+                        {
+                            "type": "string",
+                            "pattern": "^rate\\(.+\\)$",
+                            "description": "Rate expressions based on CloudWatch's rate expressions"
+                        },
+                        {
+                            "type": "string",
+                            "pattern": "^cron\\(.+\\)$",
+                            "description": "Cron expressions based on CloudWatch's cron expressions with six fields"
+                        },
+                        {
+                            "type": "string",
+                            "pattern": "^[*0-9,-/\\s]+$",
+                            "description": "Standard cron format with five fields"
+                        }
+                    ],
+                    "description": "You can specify a rate to periodically trigger your job or a cron schedule if you'd like to trigger the job at a specific time."
+                }
+            },
+            "required": [
+                "schedule"
+            ],
+            "additionalProperties": false,
+            "description": "The configuration for the event that triggers your job."
+        },
+        "image": {
+            "$ref": "./common-definitions.json#/$defs/image-config",
+            "description": "The image section contains parameters relating to the Docker build configuration or referring to an existing container image."
+        },
+        "entrypoint": {
+            "$ref": "./common-definitions.json#/$defs/entrypoint"
+        },
+        "command": {
+            "$ref": "./common-definitions.json#/$defs/command"
+        },
+        "cpu": {
+            "$ref": "./common-definitions.json#/$defs/cpu"
+        },
+        "memory": {
+            "$ref": "./common-definitions.json#/$defs/memory"
+        },
+        "platform": {
+            "$ref": "./common-definitions.json#/$defs/platform"
+        },
+        "retries": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The number of times to retry the job before failing."
+        },
+        "timeout": {
+            "$ref": "./common-definitions.json#/$defs/duration",
+            "description": "How long the job should run before it aborts and fails. You can use the units: h, m, or s."
+        },
+        "network": {
+            "$ref": "./common-definitions.json#/$defs/network",
+            "description": "The network section contains parameters for connecting to AWS resources in a VPC."
+        },
+        "variables": {
+            "$ref": "./common-definitions.json#/$defs/environment-variables",
+            "description": "Key-value pairs that represent environment variables that will be passed to your job. Copilot will include a number of environment variables by default for you."
+        },
+        "env_file": {
+            "type": "string",
+            "description": "The path to a file from the root of your workspace containing the environment variables to pass to the main container. For more information about the environment variable file, see Considerations for specifying environment variable files."
+        },
+        "secrets": {
+            "$ref": "./common-definitions.json#/$defs/secrets",
+            "description": "Key-value pairs that represent secret values from AWS Systems Manager Parameter Store that will be securely passed to your job as environment variables."
+        },
+        "storage": {
+            "$ref": "./common-definitions.json#/$defs/storage",
+            "description": "The Storage section lets you specify external EFS volumes for your containers and sidecars to mount. This allows you to access persistent storage across regions for data processing or CMS workloads."
+        },
+        "logging": {
+            "$ref": "./common-definitions.json#/$defs/logging",
+            "description": "The logging section contains log configuration parameters for your container's FireLens log driver."
+        },
+        "publish": {
+            "$ref": "./common-definitions.json#/$defs/publish",
+            "description": "The publish section allows services to publish messages to one or more SNS topics."
+        },
+        "environments": {
+            "$ref": "./common-definitions.json#/$defs/environments",
+            "description": "The environment section lets you override any value in your manifest based on the environment you're in."
+        }
+    },
+    "required": [
+        "name",
+        "type",
+        "on"
+    ],
+    "additionalProperties": false
+}

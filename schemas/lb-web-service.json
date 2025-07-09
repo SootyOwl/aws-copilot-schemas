@@ -52,7 +52,7 @@
               "description": "A sidecar container that requests are routed to instead of the main service container. If the target container's port is set to 443, then the protocol is set to HTTPS so that the load balancer establishes TLS connections with the Fargate tasks using certificates that you install on the target container."
             },
             "target_port": {
-              "type": "string",
+              "$ref": "./common-definitions.json#/$defs/port-value",
               "description": "Optional. The container port that receives traffic. By default, this will be image.port if the target container is the main container, or sidecars.<n>.port if the target container is a sidecar."
             },
             "stickiness": {
@@ -147,9 +147,7 @@
           "description": "A sidecar container that takes the place of a service container."
         },
         "target_port": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 65535,
+          "$ref": "./common-definitions.json#/$defs/port-value",
           "description": "The container port that receives traffic. Specify this field if the container port is different from nlb.port, the listener port."
         },
         "ssl_policy": {
