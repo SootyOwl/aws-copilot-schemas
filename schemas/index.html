@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AWS Copilot JSON Schemas</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+            line-height: 1.6;
+        }
+        .schema-link {
+            display: block;
+            padding: 0.5rem;
+            margin: 0.25rem 0;
+            background: #f5f5f5;
+            border-radius: 4px;
+            text-decoration: none;
+            color: #0366d6;
+        }
+        .schema-link:hover {
+            background: #e1e4e8;
+        }
+        code {
+            background: #f6f8fa;
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+            font-size: 0.9em;
+        }
+        pre {
+            background: #f6f8fa;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>AWS Copilot JSON Schemas</h1>
+    
+    <p>Comprehensive JSON Schemas for validating AWS Copilot manifest files. These schemas provide strict validation for all Copilot manifest types according to the official AWS documentation.</p>
+    
+    <h2>Available Schemas</h2>
+    
+    <h3>Main Schema</h3>
+    <a href="copilot-schema.json" class="schema-link">
+        <strong>copilot-schema.json</strong> - Universal schema that auto-detects and validates any Copilot manifest type
+    </a>
+    
+    <h3>Service Schemas</h3>
+    <a href="backend-service.json" class="schema-link">
+        <strong>backend-service.json</strong> - Backend Service manifests
+    </a>
+    <a href="lb-web-service.json" class="schema-link">
+        <strong>lb-web-service.json</strong> - Load Balanced Web Service manifests
+    </a>
+    <a href="rd-web-service.json" class="schema-link">
+        <strong>rd-web-service.json</strong> - Request-Driven Web Service manifests
+    </a>
+    <a href="worker-service.json" class="schema-link">
+        <strong>worker-service.json</strong> - Worker Service manifests
+    </a>
+    
+    <h3>Other Manifest Types</h3>
+    <a href="environment.json" class="schema-link">
+        <strong>environment.json</strong> - Environment manifests
+    </a>
+    <a href="scheduled-job.json" class="schema-link">
+        <strong>scheduled-job.json</strong> - Scheduled Job manifests
+    </a>
+    <a href="static-site.json" class="schema-link">
+        <strong>static-site.json</strong> - Static Site manifests
+    </a>
+    <a href="pipeline.json" class="schema-link">
+        <strong>pipeline.json</strong> - Pipeline manifests
+    </a>
+    
+    <h3>Common Definitions</h3>
+    <a href="common-definitions.json" class="schema-link">
+        <strong>common-definitions.json</strong> - Shared definitions used across all schemas
+    </a>
+    
+    <h2>Usage</h2>
+    
+    <h3>VS Code Integration</h3>
+    <p>Add this to your VS Code <code>settings.json</code> or workspace settings:</p>
+    <pre><code>{
+  "yaml.schemas": {
+    "https://sootyowl.github.io/aws-copilot-schemas/copilot-schema.json": [
+      "**/copilot/**/manifest.yml",
+      "**/copilot/**/copilot.yml",
+      "**/copilot/**/*.manifest.yml"
+    ]
+  }
+}</code></pre>
+    
+    <h3>Direct Schema Reference</h3>
+    <p>Add this to the top of your YAML manifest files:</p>
+    <pre><code># yaml-language-server: $schema=https://sootyowl.github.io/aws-copilot-schemas/copilot-schema.json</code></pre>
+    
+    <h3>Programmatic Validation</h3>
+    <p>Use with any JSON Schema validator:</p>
+    <pre><code>const Ajv = require('ajv');
+const ajv = new Ajv();
+
+// Load the schema
+const schema = await fetch('https://sootyowl.github.io/aws-copilot-schemas/copilot-schema.json')
+  .then(res => res.json());
+
+const validate = ajv.compile(schema);
+const isValid = validate(yourManifestData);</code></pre>
+    
+    <h2>Features</h2>
+    <ul>
+        <li>✅ Complete validation for all AWS Copilot manifest types</li>
+        <li>✅ Auto-detection of manifest type (no manual specification needed)</li>
+        <li>✅ Strict adherence to AWS Copilot documentation</li>
+        <li>✅ Comprehensive error reporting</li>
+        <li>✅ Support for all service types, environments, jobs, and pipelines</li>
+        <li>✅ VS Code IntelliSense and validation support</li>
+    </ul>
+    
+    <h2>Repository</h2>
+    <p>Source code and documentation: <a href="https://github.com/SootyOwl/aws-copilot-schemas">GitHub Repository</a></p>
+    
+    <footer style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #eee; color: #666;">
+        <p>These schemas are community-maintained and regularly updated to match the latest AWS Copilot documentation.</p>
+    </footer>
+</body>
+</html>
