@@ -1,0 +1,210 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "pattern": "^[a-zA-Z][a-zA-Z0-9-]*$",
+      "description": "The name of your pipeline."
+    },
+    "version": {
+      "type": "string",
+      "enum": ["1"],
+      "description": "The schema version for the template. There is only one version, '1', supported at the moment."
+    },
+    "source": {
+      "type": "object",
+      "properties": {
+        "provider": {
+          "type": "string",
+          "enum": ["GitHub", "Bitbucket", "CodeCommit"],
+          "description": "The name of your provider. Currently, GitHub, Bitbucket, and CodeCommit are supported."
+        },
+        "properties": {
+          "type": "object",
+          "properties": {
+            "access_token_secret": {
+              "type": "string",
+              "description": "The name of AWS Secrets Manager secret that holds the GitHub access token to trigger the pipeline if your provider is GitHub and you created your pipeline with a personal access token."
+            },
+            "branch": {
+              "type": "string",
+              "description": "The name of the branch in your repository that triggers the pipeline."
+            },
+            "repository": {
+              "type": "string",
+              "description": "The URL of your repository."
+            },
+            "connection_name": {
+              "type": "string",
+              "description": "The name of an existing CodeStar Connections connection. If omitted, Copilot will generate a connection for you."
+            },
+            "output_artifact_format": {
+              "type": "string",
+              "enum": ["CODEBUILD_CLONE_REF", "CODE_ZIP"],
+              "description": "Optional. The output artifact format. Values can be either CODEBUILD_CLONE_REF or CODE_ZIP. If omitted, the default is CODE_ZIP."
+            }
+          },
+          "required": ["branch", "repository"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["provider", "properties"],
+      "additionalProperties": false,
+      "description": "Configuration for how your pipeline is triggered."
+    },
+    "build": {
+      "type": "object",
+      "properties": {
+        "image": {
+          "type": "string",
+          "description": "The URI that identifies the Docker image to use for this build project."
+        },
+        "buildspec": {
+          "type": "string",
+          "description": "Optional. The path to a buildspec file, relative to the project root, to use for this build project."
+        },
+        "additional_policy": {
+          "type": "object",
+          "properties": {
+            "PolicyDocument": {
+              "type": "object",
+              "description": "Specify an additional policy document to add to the build project role."
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false,
+      "description": "Configuration for CodeBuild project."
+    },
+    "stages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The name of an environment to deploy your services to."
+          },
+          "requires_approval": {
+            "type": "boolean",
+            "description": "Optional. Indicates whether to add a manual approval step before the deployment. Defaults to false."
+          },
+          "require_approval": {
+            "type": "boolean",
+            "description": "Optional. Indicates whether to add a manual approval step before the deployment. Defaults to false. (Alternative spelling)"
+          },
+          "pre_deployments": {
+            "type": "object",
+            "patternProperties": {
+              "^[a-zA-Z][a-zA-Z0-9_-]*$": {
+                "type": "object",
+                "properties": {
+                  "buildspec": {
+                    "type": "string",
+                    "description": "The path to a buildspec file, relative to the project root, to use for this build project."
+                  },
+                  "depends_on": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Optional. Names of other pre-deployment actions that should be deployed prior to deploying this action."
+                  }
+                },
+                "required": ["buildspec"],
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false,
+            "description": "Optional. Add actions to be executed before deployments."
+          },
+          "deployments": {
+            "type": "object",
+            "patternProperties": {
+              "^[a-zA-Z][a-zA-Z0-9_-]*$": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "depends_on": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "Optional. Name of other jobs or services that should be deployed prior to deploying this microservice."
+                      },
+                      "stack_name": {
+                        "type": "string",
+                        "description": "Optional. Name of the stack to create or update."
+                      },
+                      "template_path": {
+                        "type": "string",
+                        "description": "Optional. Path to the CloudFormation template generated during the build phase."
+                      },
+                      "template_config": {
+                        "type": "string",
+                        "description": "Optional. Path to the CloudFormation template configuration generated during the build phase."
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false,
+            "description": "Optional. Control which CloudFormation stacks to deploy and their order."
+          },
+          "post_deployments": {
+            "type": "object",
+            "patternProperties": {
+              "^[a-zA-Z][a-zA-Z0-9_-]*$": {
+                "type": "object",
+                "properties": {
+                  "buildspec": {
+                    "type": "string",
+                    "description": "The path to a buildspec file, relative to the project root, to use for this build project."
+                  },
+                  "depends_on": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Optional. Names of other post-deployment actions that should be deployed prior to deploying this action."
+                  }
+                },
+                "required": ["buildspec"],
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false,
+            "description": "Optional. Add actions to be executed after deployments. Mutually exclusive with test_commands."
+          },
+          "test_commands": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Optional. Commands to run integration or end-to-end tests after deployment. Mutually exclusive with post_deployments."
+          }
+        },
+        "required": ["name"],
+        "additionalProperties": false,
+        "not": {
+          "allOf": [
+            {"required": ["post_deployments"]},
+            {"required": ["test_commands"]}
+          ]
+        }
+      },
+      "minItems": 1,
+      "description": "Ordered list of environments that your pipeline will deploy to."
+    }
+  },
+  "required": ["name", "source", "stages"],
+  "additionalProperties": false
+}

@@ -1,32 +1,71 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "description": "AWS Copilot manifest schema with discriminator-based validation",
+  "description": "AWS Copilot manifest schema with comprehensive validation for all manifest types",
   "type": "object",
-  "discriminator": {
-    "propertyName": "type"
-  },
-  "required": ["name", "type"],
+  "required": ["name"],
   "oneOf": [
     {
-      "$ref": "./backend-service.json"
+      "description": "Backend Service manifest",
+      "allOf": [
+        {"properties": {"type": {"const": "Backend Service"}}},
+        {"$ref": "./backend-service.json"}
+      ]
     },
     {
-      "$ref": "./lb-web-service.json"
+      "description": "Load Balanced Web Service manifest",
+      "allOf": [
+        {"properties": {"type": {"const": "Load Balanced Web Service"}}},
+        {"$ref": "./lb-web-service.json"}
+      ]
     },
     {
-      "$ref": "./rd-web-service.json"
+      "description": "Request-Driven Web Service manifest",
+      "allOf": [
+        {"properties": {"type": {"const": "Request-Driven Web Service"}}},
+        {"$ref": "./rd-web-service.json"}
+      ]
     },
     {
-      "$ref": "./scheduled-job.json"
+      "description": "Scheduled Job manifest",
+      "allOf": [
+        {"properties": {"type": {"const": "Scheduled Job"}}},
+        {"$ref": "./scheduled-job.json"}
+      ]
     },
     {
-      "$ref": "./static-site.json"
+      "description": "Static Site manifest",
+      "allOf": [
+        {"properties": {"type": {"const": "Static Site"}}},
+        {"$ref": "./static-site.json"}
+      ]
     },
     {
-      "$ref": "./worker-service.json"
+      "description": "Worker Service manifest",
+      "allOf": [
+        {"properties": {"type": {"const": "Worker Service"}}},
+        {"$ref": "./worker-service.json"}
+      ]
     },
     {
-      "$ref": "./environment.json"
+      "description": "Environment manifest",
+      "allOf": [
+        {"properties": {"type": {"const": "Environment"}}},
+        {"$ref": "./environment.json"}
+      ]
+    },
+    {
+      "description": "Pipeline manifest (detected by structure)",
+      "allOf": [
+        {
+          "properties": {
+            "source": {"type": "object"},
+            "stages": {"type": "array"}
+          },
+          "required": ["source", "stages"],
+          "not": {"required": ["type"]}
+        },
+        {"$ref": "./pipeline.json"}
+      ]
     }
   ]
 }
