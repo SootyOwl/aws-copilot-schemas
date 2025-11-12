@@ -9,9 +9,9 @@
       "description": "The name of your pipeline."
     },
     "version": {
-      "type": "string",
-      "enum": ["1"],
-      "description": "The schema version for the template. There is only one version, '1', supported at the moment."
+      "type": "integer",
+      "enum": [1],
+      "description": "The schema version for the template. There is only one version, `1`, supported at the moment. (NOTE: The Copilot CLI docs *incorrectly* specify that this should be a string.)"
     },
     "source": {
       "type": "object",
